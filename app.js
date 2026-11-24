@@ -7337,7 +7337,7 @@ function showIosInstallInstructions() {
 
 function copyPlatformLiveUrl() {
   const input = document.getElementById('ghPlatformUrlInput') || document.getElementById('livePlatformUrlInput');
-  const url = input ? input.value : 'https://scorpion04pvp.github.io/baticalc/';
+  const url = input ? input.value : 'https://batihubdz.github.io/batihubdz/';
   navigator.clipboard.writeText(url).then(() => {
     showToast('تم نسخ الرابط المباشر للمنصة بنجاح: ' + url, 'success');
   }).catch(() => {

@@ -861,7 +861,7 @@ function renderGoogleAccountsChooserFeed() {
           <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
         </div>
       </div>
-      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : '<span class="text-xs text-emerald-600 font-medium font-sans">Active</span>'}
+      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : ''}
     `;
 
     container.appendChild(row);

@@ -864,46 +864,7 @@ function closeGoogleAccountChooserScreen() {
 
 let isEnteringAnotherGoogleAccount = false;
 let pendingConsentAccount = null;
-
-const DEFAULT_GOOGLE_DEVICE_ACCOUNTS = [
-  {
-    name: 'Mouhaned Guellif',
-    email: 'mouhanedguellif16@gmail.com',
-    initial: 'M',
-    color: '#1a73e8'
-  },
-  {
-    name: 'Mouhaned Che Givara',
-    email: 'mouhanedchegivara@gmail.com',
-    initial: 'M',
-    color: '#0f9d58'
-  },
-  {
-    name: 'Guellif Mouhaned',
-    email: 'guellifmouhaned23@gmail.com',
-    initial: 'G',
-    color: '#7b1fa2'
-  },
-  {
-    name: 'tomy dev',
-    email: 'devtomy29@gmail.com',
-    initial: 'T',
-    color: '#673ab7'
-  },
-  {
-    name: 'Algeria Shield',
-    email: 'algeriashieldrp.04@gmail.com',
-    initial: 'A',
-    color: '#d93025'
-  },
-  {
-    name: 'BatiHub DZ (الإدارة)',
-    email: 'batihubdz@gmail.com',
-    avatar: 'assets/batihub_logo.png',
-    initial: 'B',
-    color: '#f59e0b'
-  }
-];
+let currentGoogleAuthEmail = '';
 
 function isGoogleAccountAuthorized(email) {
   if (!email) return false;
@@ -921,6 +882,82 @@ function markGoogleAccountAuthorized(email) {
     authorizedSet.push(cleanEmail);
     setStorageJSON('batihub_google_authorized_accounts', authorizedSet);
   }
+}
+
+function proceedToGooglePasswordStep() {
+  const inp = document.getElementById('directGoogleEmailInput');
+  let email = (inp ? inp.value : '').trim().toLowerCase();
+  if (!email) {
+    showToast('يرجى كتابة عنوان بريد Google (Gmail)', 'warning');
+    if (inp) inp.focus();
+    return;
+  }
+  if (!email.includes('@')) {
+    email += '@gmail.com';
+  }
+  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  if (!gmailRegex.test(email)) {
+    showToast('يرجى إدخال بريد Google (Gmail) صحيح ينتهي بـ @gmail.com', 'warning');
+    if (inp) inp.focus();
+    return;
+  }
+
+  currentGoogleAuthEmail = email;
+
+  // Switch to Google Password Step
+  const stepEmail = document.getElementById('googleEmailStep');
+  const stepPass = document.getElementById('googlePasswordStep');
+  const displayEmail = document.getElementById('googleSelectedEmailDisplay');
+  const avatarMini = document.getElementById('googleSelectedAvatarMini');
+
+  if (stepEmail) stepEmail.classList.add('hidden');
+  if (stepPass) stepPass.classList.remove('hidden');
+  if (displayEmail) displayEmail.textContent = email;
+  if (avatarMini) {
+    const fullName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[email]) || deriveNameFromGmail(email);
+    avatarMini.textContent = (fullName.charAt(0) || email.charAt(0)).toUpperCase();
+  }
+
+  const passInp = document.getElementById('googlePasswordInput');
+  if (passInp) {
+    passInp.value = '';
+    passInp.focus();
+  }
+}
+
+function backToGoogleEmailStep() {
+  const stepEmail = document.getElementById('googleEmailStep');
+  const stepPass = document.getElementById('googlePasswordStep');
+  if (stepPass) stepPass.classList.add('hidden');
+  if (stepEmail) stepEmail.classList.remove('hidden');
+  const inp = document.getElementById('directGoogleEmailInput');
+  if (inp) inp.focus();
+}
+
+function toggleShowGooglePassword(checkbox) {
+  const inp = document.getElementById('googlePasswordInput');
+  if (inp) {
+    inp.type = checkbox.checked ? 'text' : 'password';
+  }
+}
+
+function submitGooglePasswordAndAuthenticate() {
+  const passInp = document.getElementById('googlePasswordInput');
+  const pass = (passInp ? passInp.value : '').trim();
+  if (!pass) {
+    showToast('يرجى إدخال كلمة المرور للمتابعة', 'warning');
+    if (passInp) passInp.focus();
+    return;
+  }
+
+  const email = currentGoogleAuthEmail;
+  if (!email) {
+    backToGoogleEmailStep();
+    return;
+  }
+
+  // Show official Google OAuth Consent / Permissions dialog
+  openGoogleOAuthConsent(email);
 }
 
 function openGoogleOAuthConsent(email) {
@@ -965,7 +1002,7 @@ function confirmGoogleOAuthConsent() {
   const modal = document.getElementById('googleOAuthConsentModal');
   if (modal) modal.classList.add('hidden');
 
-  showToast('تم منح تصريح Google وتسجيل الدخول بنجاح!', 'success');
+  showToast('تم التحقق من حساب Google وتسجيل الدخول بنجاح!', 'success');
   logInGoogleUserDirectly(email, true, extraProfile);
   pendingConsentAccount = null;
 }
@@ -977,22 +1014,7 @@ function cancelGoogleOAuthConsent() {
 }
 
 function submitDirectGoogleEmail() {
-  const inp = document.getElementById('directGoogleEmailInput') || document.getElementById('customAnotherGmailInput');
-  let email = (inp ? inp.value : '').trim().toLowerCase();
-  if (!email) {
-    showToast('يرجى كتابة عنوان بريد Google (Gmail)', 'warning');
-    return;
-  }
-  // Auto-append @gmail.com if user entered username without domain
-  if (!email.includes('@')) {
-    email += '@gmail.com';
-  }
-  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-  if (!gmailRegex.test(email)) {
-    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح ينتهي بـ @gmail.com', 'warning');
-    return;
-  }
-  selectGoogleAccount(email);
+  proceedToGooglePasswordStep();
 }
 
 function showSavedGoogleAccountsList() {
@@ -1006,7 +1028,7 @@ function toggleUseAnotherGoogleAccount() {
 }
 
 function submitCustomAnotherGmail() {
-  submitDirectGoogleEmail();
+  proceedToGooglePasswordStep();
 }
 
 function renderGoogleAccountsChooserFeed() {
@@ -1015,40 +1037,23 @@ function renderGoogleAccountsChooserFeed() {
 
   const trustedMap = getTrustedDevicesMap();
   const accounts = initAccountsDatabase();
+  const titleEl = document.getElementById('googleAuthTitle');
 
+  // ONLY list accounts that the user ACTUALLY signed into on this specific device
   const deviceAccounts = [];
   const existingEmails = new Set();
 
-  // 1. Add default Google device accounts
-  DEFAULT_GOOGLE_DEVICE_ACCOUNTS.forEach(item => {
-    const clean = item.email.toLowerCase().trim();
-    const acc = accounts[clean] || {};
-    const isAuth = isGoogleAccountAuthorized(clean);
-    deviceAccounts.push({
-      name: (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || item.name,
-      email: clean,
-      initial: item.initial,
-      avatar: acc.avatar || item.avatar || null,
-      color: item.color,
-      signedOut: !isAuth
-    });
-    existingEmails.add(clean);
-  });
-
-  // 2. Add any additional accounts signed in on this device
   Object.keys(trustedMap).forEach(email => {
     const clean = email.toLowerCase().trim();
     if (clean && clean.includes('@') && !existingEmails.has(clean)) {
       const acc = accounts[clean] || {};
       const fullName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || acc.fullName || deriveNameFromGmail(clean);
-      const isAuth = isGoogleAccountAuthorized(clean);
       deviceAccounts.push({
         name: fullName,
         email: clean,
         initial: clean.charAt(0).toUpperCase(),
         avatar: acc.avatar || null,
-        color: '#1a73e8',
-        signedOut: !isAuth
+        color: '#1a73e8'
       });
       existingEmails.add(clean);
     }
@@ -1056,25 +1061,69 @@ function renderGoogleAccountsChooserFeed() {
 
   container.innerHTML = '';
 
-  // Mode: Entering another Gmail account
-  if (isEnteringAnotherGoogleAccount) {
+  // Mode 1: No accounts on this device yet, OR user requested to sign in with another account
+  if (deviceAccounts.length === 0 || isEnteringAnotherGoogleAccount) {
+    if (titleEl) titleEl.textContent = 'Sign in';
+    const showBack = (deviceAccounts.length > 0 && isEnteringAnotherGoogleAccount);
+
     container.innerHTML = `
       <div class="p-6 sm:p-8 space-y-6">
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#1f1f1f]">Email or phone</label>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <input type="email" id="directGoogleEmailInput" placeholder="example@gmail.com" class="flex-1 bg-white border border-[#dadce0] rounded-xl px-4 py-3 text-sm text-[#1f1f1f] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] font-mono transition" dir="ltr" onkeydown="if(event.key==='Enter') submitDirectGoogleEmail()">
-            <button type="button" onclick="submitDirectGoogleEmail()" class="px-7 py-3 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-xl text-sm transition cursor-pointer shadow">
+        <!-- Step 1: Email or Phone -->
+        <div id="googleEmailStep" class="space-y-6">
+          <div class="space-y-2">
+            <div class="relative">
+              <input type="text" id="directGoogleEmailInput" placeholder=" " class="peer w-full bg-white border border-[#dadce0] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 rounded-lg px-4 pt-4 pb-2 text-base text-[#1f1f1f] focus:outline-none transition font-sans" dir="ltr" onkeydown="if(event.key==='Enter') proceedToGooglePasswordStep()">
+              <label for="directGoogleEmailInput" class="absolute left-4 top-3 text-xs text-[#5f6368] peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-[#5f6368] peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#1a73e8] transition-all pointer-events-none">Email or phone</label>
+            </div>
+            <div class="flex justify-start">
+              <button type="button" class="text-xs font-medium text-[#1a73e8] hover:underline cursor-pointer">Forgot email?</button>
+            </div>
+          </div>
+
+          <div class="text-xs text-[#5f6368] leading-relaxed">
+            Not your computer? Use Guest mode to sign in privately.
+          </div>
+
+          <div class="flex items-center justify-between pt-4">
+            ${showBack ? '<button type="button" onclick="showSavedGoogleAccountsList()" class="text-xs font-medium text-[#1a73e8] hover:underline cursor-pointer">Back to accounts</button>' : '<button type="button" class="text-xs font-medium text-[#1a73e8] hover:underline cursor-pointer">Create account</button>'}
+            <button type="button" onclick="proceedToGooglePasswordStep()" class="px-7 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-full text-sm transition cursor-pointer shadow-sm">
               Next
             </button>
           </div>
         </div>
-        <div class="flex items-center justify-between text-xs text-[#5f6368] pt-1">
-          <span>Not your computer? Use Guest mode to sign in privately.</span>
-          <button type="button" onclick="showSavedGoogleAccountsList()" class="text-[#1a73e8] hover:underline font-medium cursor-pointer">Back to accounts</button>
+
+        <!-- Step 2: Password -->
+        <div id="googlePasswordStep" class="hidden space-y-6">
+          <button type="button" onclick="backToGoogleEmailStep()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#dadce0] hover:bg-[#f8f9fa] transition text-xs text-[#1f1f1f] cursor-pointer">
+            <div id="googleSelectedAvatarMini" class="w-5 h-5 rounded-full bg-[#1a73e8] text-white flex items-center justify-center text-[10px] font-bold">M</div>
+            <span id="googleSelectedEmailDisplay" class="font-medium font-mono text-xs">email@gmail.com</span>
+            <svg class="w-3 h-3 text-[#5f6368]" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+          </button>
+
+          <div class="space-y-2">
+            <div class="relative">
+              <input type="password" id="googlePasswordInput" placeholder=" " class="peer w-full bg-white border border-[#dadce0] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 rounded-lg px-4 pt-4 pb-2 text-base text-[#1f1f1f] focus:outline-none transition font-sans" dir="ltr" onkeydown="if(event.key==='Enter') submitGooglePasswordAndAuthenticate()">
+              <label for="googlePasswordInput" class="absolute left-4 top-3 text-xs text-[#5f6368] peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-[#5f6368] peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#1a73e8] transition-all pointer-events-none">Enter your password</label>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 text-xs text-[#444746] cursor-pointer select-none">
+                <input type="checkbox" onchange="toggleShowGooglePassword(this)" class="rounded border-[#dadce0] text-[#1a73e8] focus:ring-0">
+                <span>Show password</span>
+              </label>
+              <button type="button" class="text-xs font-medium text-[#1a73e8] hover:underline cursor-pointer">Forgot password?</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4">
+            <button type="button" onclick="backToGoogleEmailStep()" class="text-xs font-medium text-[#1a73e8] hover:underline cursor-pointer">Back</button>
+            <button type="button" onclick="submitGooglePasswordAndAuthenticate()" class="px-7 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-full text-sm transition cursor-pointer shadow-sm">
+              Next
+            </button>
+          </div>
         </div>
       </div>
     `;
+
     setTimeout(() => {
       const inp = document.getElementById('directGoogleEmailInput');
       if (inp) inp.focus();
@@ -1082,7 +1131,9 @@ function renderGoogleAccountsChooserFeed() {
     return;
   }
 
-  // Normal Mode: Show the accounts list
+  // Mode 2: User has signed-in accounts on this specific device
+  if (titleEl) titleEl.textContent = 'Choose an account';
+
   deviceAccounts.forEach(acc => {
     const row = document.createElement('div');
     row.className = 'google-account-row flex items-center justify-between p-3.5 hover:bg-[#f8fafd] cursor-pointer transition select-none';
@@ -1100,13 +1151,12 @@ function renderGoogleAccountsChooserFeed() {
           <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
         </div>
       </div>
-      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : '<span class="text-xs text-[#1a73e8] font-medium font-sans">دخول فوري</span>'}
     `;
 
     container.appendChild(row);
   });
 
-  // Exactly one "Use another account" button at the bottom of the list
+  // "Use another account" button at the bottom of the list
   const useAnotherRow = document.createElement('div');
   useAnotherRow.className = 'flex items-center gap-3.5 p-3.5 hover:bg-[#f8fafd] cursor-pointer transition border-t border-[#e0e0e0] select-none';
   useAnotherRow.onclick = () => {
@@ -1128,14 +1178,21 @@ function selectGoogleAccount(email) {
   if (!email) return;
   const cleanEmail = email.trim().toLowerCase();
 
-  // If already authorized previously, enter directly!
+  // If already authorized on this device, enter directly!
   if (isGoogleAccountAuthorized(cleanEmail)) {
     logInGoogleUserDirectly(cleanEmail, true);
     return;
   }
 
-  // First time: show Google OAuth Consent & Permissions dialog
-  openGoogleOAuthConsent(cleanEmail);
+  // Otherwise prompt password & consent
+  currentGoogleAuthEmail = cleanEmail;
+  isEnteringAnotherGoogleAccount = true;
+  renderGoogleAccountsChooserFeed();
+  setTimeout(() => {
+    const inp = document.getElementById('directGoogleEmailInput');
+    if (inp) inp.value = cleanEmail;
+    proceedToGooglePasswordStep();
+  }, 100);
 }
 
 function toggleLanguageArabic() {
@@ -3624,8 +3681,8 @@ function handleEditWorkerPostSubmit(event) {
 /* 12.7. REALTIME LIVE APP UPDATER (INSTANT UPDATE ACROSS ALL PHONES & APPS) */
 /* ========================================================================= */
 
-const CURRENT_APP_BUILD = 1732647000000;
-const CURRENT_APP_VERSION = '4.7.0';
+const CURRENT_APP_BUILD = 1732647500000;
+const CURRENT_APP_VERSION = '4.8.0';
 
 let isUpdatingApp = false;
 
@@ -5179,7 +5236,7 @@ function startLiveClock() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 0. Cache-Busting & Mobile Force Refresh Engine (Bypasses stale browser cache)
-  const CURRENT_APP_VERSION = '4.7.0';
+  const CURRENT_APP_VERSION = '4.8.0';
   const storedVersion = localStorage.getItem('batihub_app_version');
   if (storedVersion !== CURRENT_APP_VERSION) {
     localStorage.setItem('batihub_app_version', CURRENT_APP_VERSION);

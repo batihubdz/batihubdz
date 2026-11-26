@@ -1,10 +1,10 @@
-// BatiHub DZ - Progressive Web App Service Worker
-const CACHE_NAME = 'batihub-dz-v4.2.0-standalone-tabs-and-gemini';
+// BatiHub DZ - Progressive Web App Service Worker (v4.3.0 Live Realtime)
+const CACHE_NAME = 'batihub-dz-v4.3.0-live-realtime';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=4.2.0',
-  './app.js?v=4.2.0',
+  './style.css?v=4.3.0',
+  './app.js?v=4.3.0',
   './manifest.json',
   './assets/mqtt.min.js?v=4.1.0',
   './assets/batihub_logo.png',
@@ -19,6 +19,7 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
     })
   );
+  // Force active immediately without waiting
   self.skipWaiting();
 });
 
@@ -30,6 +31,7 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  // Take control of all pages and mobile clients immediately
   self.clients.claim();
 });
 
@@ -44,10 +46,27 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  const isCodeAsset = url.pathname.endsWith('.js') || url.pathname.endsWith('.html') || url.pathname.endsWith('.css') || url.pathname === '/' || url.pathname.endsWith('/baticalc/') || url.pathname.endsWith('/baticalc');
+  // 1. NEVER cache version.json - always pull live from server
+  if (url.pathname.endsWith('version.json')) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() => {
+        return new Response('{"offline": true}', {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
+
+  // 2. Code assets: Network-first with fresh fallback to cache
+  const isCodeAsset = url.pathname.endsWith('.js') || 
+                      url.pathname.endsWith('.html') || 
+                      url.pathname.endsWith('.css') || 
+                      url.pathname === '/' || 
+                      url.pathname.endsWith('/batihubdz/') || 
+                      url.pathname.endsWith('/batihubdz');
 
   if (isCodeAsset) {
-    // ALWAYS force fresh network fetch for code assets
     event.respondWith(
       fetch(event.request, { cache: 'no-cache' })
         .then((networkResponse) => {
@@ -62,7 +81,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Other assets (images, icons)
+  // 3. Static Media Assets (images, fonts)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((resp) => {

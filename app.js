@@ -788,20 +788,120 @@ function deriveNameFromGmail(email) {
   return rawParts.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-const GOOGLE_ACCOUNTS_PRESETS = [
-  { name: 'tomy dev', email: 'devtomy29@gmail.com', initial: 't', color: '#7b1fa2', signedOut: false },
-  { name: 'Algeria Shield', email: 'algeriashieldrp.04@gmail.com', initial: 'A', color: '#e91e63', signedOut: false },
-  { name: 'samp samp', email: 'samps7088@gmail.com', initial: 's', color: '#d84315', signedOut: true },
-  { name: 'Mouha Rf', email: 'mouharf39@gmail.com', initial: 'M', color: '#c2185b', signedOut: true },
-  { name: 'Mouhaned Che Givara', email: 'mouhanedchegivara@gmail.com', initial: 'M', color: '#2e7d32', signedOut: false },
-  { name: 'Guellif Mouhaned', email: 'guellifmouhaned19@gmail.com', initial: 'G', color: '#6a1b9a', signedOut: true },
-  { name: 'yahyadx yahyadx', email: 'yahyadxyahyadx0@gmail.com', initial: 'y', color: '#00695c', signedOut: false },
-  { name: 'Yahyadzsd Yahyadxzz', email: 'yahyadxyahyadxc@gmail.com', initial: 'Y', color: '#8e24aa', signedOut: true },
-  { name: 'Mouhaned Guellif', email: 'mouhaned.0guellif@gmail.com', initial: 'M', color: '#546e7a', signedOut: false },
-  { name: 'islam lag', email: 'islamlag31@gmail.com', initial: 'i', color: '#e91e63', signedOut: true },
-  { name: 'Mouhaned Guellif (رسمي)', email: 'mouhanedguellif16@gmail.com', initial: 'M', color: '#1a73e8', signedOut: false },
-  { name: 'BatiHub DZ (الإدارة)', email: 'batihubdz@gmail.com', initial: 'B', color: '#ff8f00', signedOut: false }
-];
+/* ========================================================================= */
+/* 3.1. OFFICIAL GOOGLE IDENTITY SERVICES (GIS) & ACCOUNT CHOOSER            */
+/* ========================================================================= */
+
+const GOOGLE_CLIENT_ID = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com';
+
+function decodeGoogleJwt(token) {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (err) {
+    console.error('Error decoding Google JWT:', err);
+    return null;
+  }
+}
+
+function handleRealGoogleCredentialResponse(response) {
+  if (!response || !response.credential) return;
+  try {
+    const profile = decodeGoogleJwt(response.credential);
+    if (profile && profile.email) {
+      logInGoogleUserDirectly(profile.email, true, {
+        fullName: profile.name || deriveNameFromGmail(profile.email),
+        avatar: profile.picture || null,
+        isVerified: true,
+        googleId: profile.sub
+      });
+      showToast(`مرحباً بك ${profile.name || profile.email}! تم الدخول بنجاح بحساب Google.`, 'success', 4000);
+    }
+  } catch (err) {
+    console.error('Error in handleRealGoogleCredentialResponse:', err);
+    showToast('حدث خطأ أثناء معالجة حساب Google. يمكنك إدخال بريدك مباشرة.', 'error');
+  }
+}
+
+function initRealGoogleIdentityServices() {
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+    setTimeout(initRealGoogleIdentityServices, 400);
+    return;
+  }
+
+  try {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleRealGoogleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      itp_support: true
+    });
+
+    // 1. Render Google Sign In button on Welcome screen
+    const welcomeContainer = document.getElementById('googleRealGsiButtonWelcome');
+    if (welcomeContainer) {
+      welcomeContainer.innerHTML = '';
+      google.accounts.id.renderButton(welcomeContainer, {
+        theme: 'outline',
+        size: 'large',
+        type: 'standard',
+        shape: 'pill',
+        text: 'continue_with',
+        logo_alignment: 'left',
+        width: 320
+      });
+    }
+
+    // 2. Render Google Sign In button inside Account Chooser screen
+    const chooserContainer = document.getElementById('googleRealGsiButtonChooser');
+    if (chooserContainer) {
+      chooserContainer.innerHTML = '';
+      google.accounts.id.renderButton(chooserContainer, {
+        theme: 'filled_blue',
+        size: 'large',
+        type: 'standard',
+        shape: 'pill',
+        text: 'signin_with',
+        logo_alignment: 'left',
+        width: 320
+      });
+    }
+
+    // 3. Trigger Google One Tap prompt natively (detects device's real Google accounts on PC and Android!)
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        console.log('Google One Tap not displayed:', notification.getNotDisplayedReason());
+      } else if (notification.isSkippedMoment()) {
+        console.log('Google One Tap skipped:', notification.getSkippedReason());
+      }
+    });
+  } catch (err) {
+    console.warn('Google Identity Services init note:', err);
+  }
+}
+
+function triggerRealGoogleSignIn() {
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    try {
+      google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+          openGoogleAccountChooserScreen();
+        }
+      });
+      openGoogleAccountChooserScreen();
+    } catch(e) {
+      openGoogleAccountChooserScreen();
+    }
+  } else {
+    openGoogleAccountChooserScreen();
+  }
+}
 
 function openGoogleAccountChooserScreen() {
   const welcome = document.getElementById('viewGoogleWelcome');
@@ -827,16 +927,19 @@ function renderGoogleAccountsChooserFeed() {
   const trustedMap = getTrustedDevicesMap();
   const accounts = initAccountsDatabase();
 
-  const list = [...GOOGLE_ACCOUNTS_PRESETS];
-  const existingEmails = new Set(list.map(a => a.email.toLowerCase()));
+  // ONLY list accounts that were actually used ON THIS SPECIFIC DEVICE (no hardcoded presets!)
+  const deviceAccounts = [];
+  const existingEmails = new Set();
 
   [...Object.keys(trustedMap), ...Object.keys(accounts)].forEach(email => {
-    const clean = email.toLowerCase();
+    const clean = email.toLowerCase().trim();
     if (clean && clean.includes('@') && !existingEmails.has(clean)) {
-      list.push({
-        name: deriveNameFromGmail(clean),
+      const acc = accounts[clean] || {};
+      deviceAccounts.push({
+        name: acc.fullName || deriveNameFromGmail(clean),
         email: clean,
         initial: clean.charAt(0).toUpperCase(),
+        avatar: acc.avatar || null,
         color: '#1a73e8',
         signedOut: false
       });
@@ -846,16 +949,32 @@ function renderGoogleAccountsChooserFeed() {
 
   container.innerHTML = '';
 
-  list.forEach(acc => {
+  if (deviceAccounts.length === 0) {
+    // Clean prompt when no accounts are saved on this device yet
+    container.innerHTML = `
+      <div class="p-6 text-center text-[#5f6368] space-y-2 select-none">
+        <div class="w-10 h-10 mx-auto rounded-full bg-[#f1f3f4] flex items-center justify-center text-[#1a73e8] text-lg">
+          <i class="fa-brands fa-google"></i>
+        </div>
+        <div class="text-sm font-medium text-[#1f1f1f]">لا توجد حسابات مسجلة على هذا الجهاز بعد</div>
+        <div class="text-xs text-[#5f6368]">استخدم زر Google الرسمي أعلاه للدخول، أو اضغط "Use another account" بالأسفل</div>
+      </div>
+    `;
+    return;
+  }
+
+  deviceAccounts.forEach(acc => {
     const row = document.createElement('div');
     row.className = 'google-account-row flex items-center justify-between p-3.5 hover:bg-[#f8fafd] cursor-pointer transition select-none';
     row.onclick = () => selectGoogleAccount(acc.email);
 
+    const avatarHtml = acc.avatar 
+      ? `<img src="${escapeHTML(acc.avatar)}" class="w-9 h-9 rounded-full object-cover shrink-0">`
+      : `<div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm shrink-0" style="background-color: ${acc.color};">${acc.initial}</div>`;
+
     row.innerHTML = `
       <div class="flex items-center gap-3.5">
-        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm shrink-0" style="background-color: ${acc.color};">
-          ${acc.initial}
-        </div>
+        ${avatarHtml}
         <div class="text-left font-sans">
           <div class="text-sm font-medium text-[#1f1f1f] leading-snug">${escapeHTML(acc.name)}</div>
           <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
@@ -963,7 +1082,7 @@ async function handleVerifyGoogleOtp(event) {
   pendingGoogleOtp = null;
 }
 
-function logInGoogleUserDirectly(email, trusted = true) {
+function logInGoogleUserDirectly(email, trusted = true, extraProfile = null) {
   const cleanEmail = email.trim().toLowerCase();
   const accounts = initAccountsDatabase();
   const isAdmin = (cleanEmail === 'batihubdz@gmail.com');
@@ -972,13 +1091,14 @@ function logInGoogleUserDirectly(email, trusted = true) {
   if (!account) {
     account = {
       id: 'usr_' + Date.now(),
-      firstName: deriveNameFromGmail(cleanEmail).split(' ')[0] || 'مستخدم',
-      lastName: deriveNameFromGmail(cleanEmail).split(' ').slice(1).join(' ') || '',
-      fullName: deriveNameFromGmail(cleanEmail),
+      firstName: (extraProfile && extraProfile.fullName) ? extraProfile.fullName.split(' ')[0] : (deriveNameFromGmail(cleanEmail).split(' ')[0] || 'مستخدم'),
+      lastName: (extraProfile && extraProfile.fullName) ? extraProfile.fullName.split(' ').slice(1).join(' ') : (deriveNameFromGmail(cleanEmail).split(' ').slice(1).join(' ') || ''),
+      fullName: (extraProfile && extraProfile.fullName) || deriveNameFromGmail(cleanEmail),
       email: cleanEmail,
       isVerified: true,
       role: isAdmin ? 'admin' : 'user',
-      avatar: isAdmin ? 'assets/batihub_logo.png' : null,
+      avatar: (extraProfile && extraProfile.avatar) || (isAdmin ? 'assets/batihub_logo.png' : null),
+      googleId: (extraProfile && extraProfile.googleId) || null,
       createdAt: new Date().toISOString()
     };
     accounts[cleanEmail] = account;
@@ -992,9 +1112,18 @@ function logInGoogleUserDirectly(email, trusted = true) {
   } else {
     if (isAdmin && account.role !== 'admin') {
       account.role = 'admin';
-      accounts[cleanEmail] = account;
-      setStorageJSON('batihub_registered_accounts', accounts);
     }
+    if (extraProfile && extraProfile.avatar && !account.avatar) {
+      account.avatar = extraProfile.avatar;
+    }
+    if (extraProfile && extraProfile.fullName && (!account.fullName || account.fullName === 'مستخدم')) {
+      account.fullName = extraProfile.fullName;
+    }
+    if (extraProfile && extraProfile.googleId) {
+      account.googleId = extraProfile.googleId;
+    }
+    accounts[cleanEmail] = account;
+    setStorageJSON('batihub_registered_accounts', accounts);
   }
 
   currentUser = { ...account };
@@ -3367,27 +3496,99 @@ function handleEditWorkerPostSubmit(event) {
 }
 
 /* ========================================================================= */
-/* 12.7. AUTOMATIC MOBILE APP UPDATER                                        */
+/* 12.7. REALTIME LIVE APP UPDATER (INSTANT UPDATE ACROSS ALL PHONES & APPS) */
 /* ========================================================================= */
+
+const CURRENT_APP_BUILD = 1732643500000;
+const CURRENT_APP_VERSION = '4.3.0';
+
+let isUpdatingApp = false;
+
+async function checkAppLiveUpdates() {
+  if (isUpdatingApp) return;
+  if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
+
+  try {
+    const res = await fetch('./version.json?_t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
+    if (!res.ok) return;
+    const remote = await res.json();
+    if (remote && remote.build && remote.build > CURRENT_APP_BUILD) {
+      isUpdatingApp = true;
+      console.log(`[BatiHub Live Updater] New update available: v${remote.version} (build ${remote.build})`);
+
+      // Update Service Worker
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) await reg.update();
+        } catch(e) {}
+      }
+
+      // Clear all cache stores to ensure fresh code
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        } catch(e) {}
+      }
+
+      showToast('تم توفير تحديث جديد لتطبيق BatiHub DZ! جاري التحديث المباشر الآن...', 'info', 3000);
+
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 1500);
+    }
+  } catch (err) {
+    // Offline or network error - fail silently
+  }
+}
 
 function initAutoAppUpdater() {
   if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
+    navigator.serviceWorker.register('./sw.js?v=4.3.0').then(reg => {
       reg.update().catch(() => {});
       setInterval(() => {
         reg.update().catch(() => {});
-      }, 30000);
+      }, 25000);
     }).catch(() => {});
 
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
         refreshing = true;
-        window.location.reload();
+        window.location.reload(true);
       }
     });
   }
+
+  // Start live version heartbeat
+  startLiveAppUpdateWatcher();
+}
+
+function startLiveAppUpdateWatcher() {
+  // Check 2.5s after boot
+  setTimeout(checkAppLiveUpdates, 2500);
+
+  // Periodic heartbeat every 20s
+  setInterval(checkAppLiveUpdates, 20000);
+
+  // Check whenever user switches tabs or unlocks phone screen
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkAppLiveUpdates();
+    }
+  });
+
+  window.addEventListener('focus', checkAppLiveUpdates);
+  window.addEventListener('online', checkAppLiveUpdates);
 }
 
 function forceAppReloadUpdate() {
@@ -4914,6 +5115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLiveSyncEngine();
   initNetworkEnforcement();
   initAutoAppUpdater();
+  initRealGoogleIdentityServices();
 
   // 4. Initialize calculator history tape and saved credentials
   renderCalcHistory();
@@ -4987,6 +5189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           switchAuthView('google');
           renderTrustedAccountsPills();
+          initRealGoogleIdentityServices();
         }
       }, 350);
     }

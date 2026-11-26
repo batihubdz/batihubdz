@@ -788,74 +788,90 @@ function deriveNameFromGmail(email) {
   return rawParts.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-function renderTrustedAccountsPills() {
-  const container = document.getElementById('trustedAccountsPillsList');
-  const section = document.getElementById('trustedAccountsSection');
+const GOOGLE_ACCOUNTS_PRESETS = [
+  { name: 'tomy dev', email: 'devtomy29@gmail.com', initial: 't', color: '#7b1fa2', signedOut: false },
+  { name: 'Algeria Shield', email: 'algeriashieldrp.04@gmail.com', initial: 'A', color: '#e91e63', signedOut: false },
+  { name: 'samp samp', email: 'samps7088@gmail.com', initial: 's', color: '#d84315', signedOut: true },
+  { name: 'Mouha Rf', email: 'mouharf39@gmail.com', initial: 'M', color: '#c2185b', signedOut: true },
+  { name: 'Mouhaned Che Givara', email: 'mouhanedchegivara@gmail.com', initial: 'M', color: '#2e7d32', signedOut: false },
+  { name: 'Guellif Mouhaned', email: 'guellifmouhaned19@gmail.com', initial: 'G', color: '#6a1b9a', signedOut: true },
+  { name: 'yahyadx yahyadx', email: 'yahyadxyahyadx0@gmail.com', initial: 'y', color: '#00695c', signedOut: false },
+  { name: 'Yahyadzsd Yahyadxzz', email: 'yahyadxyahyadxc@gmail.com', initial: 'Y', color: '#8e24aa', signedOut: true },
+  { name: 'Mouhaned Guellif', email: 'mouhaned.0guellif@gmail.com', initial: 'M', color: '#546e7a', signedOut: false },
+  { name: 'islam lag', email: 'islamlag31@gmail.com', initial: 'i', color: '#e91e63', signedOut: true },
+  { name: 'Mouhaned Guellif (رسمي)', email: 'mouhanedguellif16@gmail.com', initial: 'M', color: '#1a73e8', signedOut: false },
+  { name: 'BatiHub DZ (الإدارة)', email: 'batihubdz@gmail.com', initial: 'B', color: '#ff8f00', signedOut: false }
+];
+
+function openGoogleAccountChooserScreen() {
+  const welcome = document.getElementById('viewGoogleWelcome');
+  const chooser = document.getElementById('viewGoogleAccountChooser');
+  if (welcome) welcome.classList.add('hidden');
+  if (chooser) {
+    chooser.classList.remove('hidden');
+    renderGoogleAccountsChooserFeed();
+  }
+}
+
+function closeGoogleAccountChooserScreen() {
+  const welcome = document.getElementById('viewGoogleWelcome');
+  const chooser = document.getElementById('viewGoogleAccountChooser');
+  if (chooser) chooser.classList.add('hidden');
+  if (welcome) welcome.classList.remove('hidden');
+}
+
+function renderGoogleAccountsChooserFeed() {
+  const container = document.getElementById('googleAccountsChooserFeed');
   if (!container) return;
 
   const trustedMap = getTrustedDevicesMap();
   const accounts = initAccountsDatabase();
 
-  const emails = new Set([
-    'batihubdz@gmail.com',
-    'mouhanedguellif16@gmail.com',
-    ...Object.keys(trustedMap),
-    ...Object.keys(accounts)
-  ]);
+  const list = [...GOOGLE_ACCOUNTS_PRESETS];
+  const existingEmails = new Set(list.map(a => a.email.toLowerCase()));
 
-  const list = Array.from(emails).filter(e => e && e.includes('@'));
-  if (list.length === 0) {
-    if (section) section.classList.add('hidden');
-    return;
-  }
+  [...Object.keys(trustedMap), ...Object.keys(accounts)].forEach(email => {
+    const clean = email.toLowerCase();
+    if (clean && clean.includes('@') && !existingEmails.has(clean)) {
+      list.push({
+        name: deriveNameFromGmail(clean),
+        email: clean,
+        initial: clean.charAt(0).toUpperCase(),
+        color: '#1a73e8',
+        signedOut: false
+      });
+      existingEmails.add(clean);
+    }
+  });
 
-  if (section) section.classList.remove('hidden');
   container.innerHTML = '';
 
-  list.forEach(email => {
-    const clean = email.toLowerCase();
-    const isAdmin = (clean === 'batihubdz@gmail.com');
-    const name = deriveNameFromGmail(clean);
-    const initial = name.charAt(0).toUpperCase();
+  list.forEach(acc => {
+    const row = document.createElement('div');
+    row.className = 'google-account-row flex items-center justify-between p-3.5 hover:bg-[#f8fafd] cursor-pointer transition select-none';
+    row.onclick = () => selectGoogleAccount(acc.email);
 
-    const card = document.createElement('div');
-    card.className = 'p-3 rounded-2xl bg-bh-card hover:bg-slate-800 border border-bh-border hover:border-bh-yellow/70 cursor-pointer transition flex items-center justify-between group active:scale-98 shadow-sm';
-    card.onclick = () => selectGoogleAccount(clean);
-
-    card.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'} flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-          ${initial}
+    row.innerHTML = `
+      <div class="flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm shrink-0" style="background-color: ${acc.color};">
+          ${acc.initial}
         </div>
-        <div class="text-right">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-white text-xs sm:text-sm group-hover:text-bh-yellow transition">${escapeHTML(name)}</span>
-            ${isAdmin ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">إدارة</span>' : '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 font-semibold">Google</span>'}
-          </div>
-          <span class="text-[11px] text-slate-400 font-mono" dir="ltr">${escapeHTML(clean)}</span>
+        <div class="text-left font-sans">
+          <div class="text-sm font-medium text-[#1f1f1f] leading-snug">${escapeHTML(acc.name)}</div>
+          <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-[10px] text-emerald-400 font-bold hidden sm:inline">دخول فوري</span>
-        <div class="w-7 h-7 rounded-full bg-slate-700/60 group-hover:bg-bh-yellow group-hover:text-slate-950 text-slate-300 flex items-center justify-center transition text-xs shrink-0">
-          <i class="fa-solid fa-arrow-left"></i>
-        </div>
-      </div>
+      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : '<span class="text-xs text-emerald-600 font-medium font-sans">Active</span>'}
     `;
 
-    container.appendChild(card);
+    container.appendChild(row);
   });
 }
 
-function openGoogleAccountChooserModal() {
-  renderGoogleAccountsChooserList();
-  const modal = document.getElementById('modalGoogleAccountChooser');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closeGoogleAccountChooserModal() {
-  const modal = document.getElementById('modalGoogleAccountChooser');
-  if (modal) modal.classList.add('hidden');
+function selectGoogleAccount(email) {
+  if (!email) return;
+  const cleanEmail = email.trim().toLowerCase();
+  logInGoogleUserDirectly(cleanEmail, true);
 }
 
 function toggleUseAnotherGoogleAccount() {
@@ -877,87 +893,27 @@ function submitCustomAnotherGmail() {
   const email = (inp ? inp.value : '').trim().toLowerCase();
   const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
   if (!email || !email.includes('@') || !gmailRegex.test(email)) {
-    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح وموثق (ينتهي بـ @gmail.com)', 'warning');
+    showToast('Please enter a valid Google (Gmail) address (ending in @gmail.com)', 'warning');
     return;
   }
   selectGoogleAccount(email);
 }
 
-function selectGoogleAccount(email) {
-  if (!email) return;
-  const cleanEmail = email.trim().toLowerCase();
-  closeGoogleAccountChooserModal();
-  logInGoogleUserDirectly(cleanEmail, true);
+function toggleLanguageArabic() {
+  setLanguage('ar');
+  showToast('تم ضبط اللغة على العربية', 'info');
 }
 
-function renderGoogleAccountsChooserList() {
-  const container = document.getElementById('googleAccountsChooserList');
-  if (!container) return;
-
-  const trustedMap = getTrustedDevicesMap();
-  const accounts = initAccountsDatabase();
-
-  const emailsSet = new Set([
-    'mouhanedguellif16@gmail.com',
-    'batihubdz@gmail.com',
-    ...Object.keys(trustedMap),
-    ...Object.keys(accounts)
-  ]);
-
-  const list = Array.from(emailsSet).filter(e => e && e.includes('@'));
-  container.innerHTML = '';
-
-  list.forEach(email => {
-    const clean = email.toLowerCase();
-    const isAdmin = (clean === 'batihubdz@gmail.com');
-    const name = deriveNameFromGmail(clean);
-    const initial = name.charAt(0).toUpperCase();
-
-    const row = document.createElement('div');
-    row.className = 'p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-bh-yellow/70 cursor-pointer transition flex items-center justify-between group active:scale-98 shadow-sm';
-    row.onclick = () => selectGoogleAccount(clean);
-
-    row.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'} flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-          ${initial}
-        </div>
-        <div class="text-right">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-white text-xs sm:text-sm group-hover:text-bh-yellow transition">${escapeHTML(name)}</span>
-            ${isAdmin ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">إدارة</span>' : '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold">متوفر</span>'}
-          </div>
-          <span class="text-[11px] text-slate-400 font-mono" dir="ltr">${escapeHTML(clean)}</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-[10px] text-emerald-400 font-bold">دخول</span>
-        <div class="w-7 h-7 rounded-full bg-slate-700/60 group-hover:bg-bh-yellow group-hover:text-slate-950 text-slate-300 flex items-center justify-center transition text-xs shrink-0">
-          <i class="fa-solid fa-arrow-left"></i>
-        </div>
-      </div>
-    `;
-
-    container.appendChild(row);
-  });
+function renderTrustedAccountsPills() {
+  renderGoogleAccountsChooserFeed();
 }
 
 function switchAuthView(viewName) {
-  const viewGoogle = document.getElementById('viewGoogleAuth') || document.getElementById('viewLogin');
-  const viewOtp = document.getElementById('viewOtp');
-  const viewRegister = document.getElementById('viewRegister');
-  const viewForgot = document.getElementById('viewForgot');
-
-  const headerTitle = document.getElementById('authScreenHeaderTitle');
-  const headerSub = document.getElementById('authScreenHeaderSub');
-
-  [viewGoogle, viewOtp, viewRegister, viewForgot].forEach(el => el && el.classList.add('hidden'));
-
-  if (viewGoogle) viewGoogle.classList.remove('hidden');
-  if (headerTitle) headerTitle.textContent = 'BatiHub DZ • تسجيل الدخول بـ Google';
-  if (headerSub) headerSub.textContent = 'تسجيل الدخول المباشر بحساب Google (Gmail) بدون أي رمز أو كلمة مرور';
-  initMobileLoginPicker();
-  renderTrustedAccountsPills();
+  const welcome = document.getElementById('viewGoogleWelcome');
+  const chooser = document.getElementById('viewGoogleAccountChooser');
+  if (welcome) welcome.classList.remove('hidden');
+  if (chooser) chooser.classList.add('hidden');
+  renderGoogleAccountsChooserFeed();
 }
 
 let pendingGoogleOtp = null;

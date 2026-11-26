@@ -1,7 +1,7 @@
 {
-  "version": "5.0.0",
-  "build": 1732649000000,
+  "version": "5.1.0",
+  "build": 1732649800000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Official Google Identity Services (GIS) integration, body.not-authenticated lock screen overlay, JWT credential decoder, and persistent localStorage session management",
-  "timestamp": "2026-11-26T20:44:00Z"
+  "releaseNotes": "Exact Google 'Continuer avec Google' pill button with direct authentic account chooser and reliable 1-click login without blank popup",
+  "timestamp": "2026-11-26T21:15:00Z"
 }

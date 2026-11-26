@@ -898,26 +898,11 @@ function setupGoogleIdentity() {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCredentialResponse,
-      auto_select: true,
-      cancel_on_tap_outside: false
+      auto_select: false,
+      cancel_on_tap_outside: true
     });
 
-    // 3.2. Render Official Google Button
-    const btnContainer = document.getElementById('googleBtnContainer');
-    if (btnContainer) {
-      btnContainer.innerHTML = '';
-      google.accounts.id.renderButton(btnContainer, {
-        theme: 'outline',
-        size: 'large',
-        type: 'standard',
-        shape: 'pill',
-        text: 'continue_with',
-        logo_alignment: 'left',
-        width: 320
-      });
-    }
-
-    // 3.3. Activate Google One Tap Prompt
+    // 3.2. Google One Tap Prompt on supported browsers
     google.accounts.id.prompt((notification) => {
       if (notification.isNotDisplayed()) {
         console.log('[Google GIS] One Tap not displayed:', notification.getNotDisplayedReason());
@@ -3668,7 +3653,7 @@ function handleEditWorkerPostSubmit(event) {
 /* ========================================================================= */
 
 const CURRENT_APP_BUILD = 1732648000000;
-const CURRENT_APP_VERSION = '5.0.0';
+const CURRENT_APP_VERSION = '5.1.0';
 
 let isUpdatingApp = false;
 
@@ -5222,7 +5207,7 @@ function startLiveClock() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 0. Cache-Busting & Mobile Force Refresh Engine (Bypasses stale browser cache)
-  const CURRENT_APP_VERSION = '5.0.0';
+  const CURRENT_APP_VERSION = '5.1.0';
   const storedVersion = localStorage.getItem('batihub_app_version');
   if (storedVersion !== CURRENT_APP_VERSION) {
     localStorage.setItem('batihub_app_version', CURRENT_APP_VERSION);

@@ -1,7 +1,7 @@
 {
-  "version": "5.1.0",
-  "build": 1732649800000,
+  "version": "6.0.0",
+  "build": 1732650800000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Exact Google 'Continuer avec Google' pill button with direct authentic account chooser and reliable 1-click login without blank popup",
-  "timestamp": "2026-11-26T21:15:00Z"
+  "releaseNotes": "Standard Email and Password login/register authentication, device local database persistence and realtime MQTT cross-device sync",
+  "timestamp": "2026-11-26T21:31:00Z"
 }

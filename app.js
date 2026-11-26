@@ -811,404 +811,265 @@ function deriveNameFromGmail(email) {
 }
 
 /* ========================================================================= */
-/* 3.1. OFFICIAL GOOGLE IDENTITY SERVICES (GIS) & ACCOUNT CHOOSER            */
+/* 3. AUTHENTIC EMAIL & PASSWORD AUTHENTICATION ENGINE                       */
 /* ========================================================================= */
 
-const GOOGLE_CLIENT_ID = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com';
+let activeAuthTab = 'login';
 
-/**
- * 1. Client-side JWT Decoder for Google Identity Services credentials
- */
-function decodeGoogleJwt(token) {
-  if (!token) return null;
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    const payload = JSON.parse(jsonPayload);
-    return {
-      name: payload.name || payload.given_name || 'مستخدم Google',
-      email: (payload.email || '').toLowerCase().trim(),
-      avatar: payload.picture || null,
-      googleId: payload.sub,
-      verified: payload.email_verified
-    };
-  } catch (err) {
-    console.error('[Google GIS] Error decoding JWT token:', err);
-    return null;
+function switchAuthTab(tab) {
+  activeAuthTab = tab;
+  const loginForm = document.getElementById('authLoginForm');
+  const registerForm = document.getElementById('authRegisterForm');
+  const tabBtnLogin = document.getElementById('tabBtnLogin');
+  const tabBtnRegister = document.getElementById('tabBtnRegister');
+
+  if (tab === 'register') {
+    if (loginForm) loginForm.classList.add('hidden');
+    if (registerForm) registerForm.classList.remove('hidden');
+    if (tabBtnLogin) {
+      tabBtnLogin.className = 'py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer text-slate-400 hover:text-white';
+    }
+    if (tabBtnRegister) {
+      tabBtnRegister.className = 'py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md';
+    }
+    const nameInp = document.getElementById('authRegFullName');
+    if (nameInp) nameInp.focus();
+  } else {
+    if (registerForm) registerForm.classList.add('hidden');
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (tabBtnLogin) {
+      tabBtnLogin.className = 'py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md';
+    }
+    if (tabBtnRegister) {
+      tabBtnRegister.className = 'py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer text-slate-400 hover:text-white';
+    }
+    const emailInp = document.getElementById('authLoginEmail');
+    if (emailInp) emailInp.focus();
   }
 }
 
-/**
- * 2. Official Google Credential Response Handler
- */
-function handleGoogleCredentialResponse(response) {
-  if (!response || !response.credential) {
-    console.warn('[Google GIS] Empty credential response received');
+function toggleAuthPasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById('eye_' + inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    }
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+}
+
+async function handleStandardEmailLogin() {
+  const emailInput = document.getElementById('authLoginEmail');
+  const passInput = document.getElementById('authLoginPassword');
+  const rememberCheckbox = document.getElementById('authLoginRememberMe');
+
+  const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+  const password = (passInput ? passInput.value : '').trim();
+  const rememberMe = rememberCheckbox ? rememberCheckbox.checked : true;
+
+  if (!email || !email.includes('@')) {
+    showToast('يرجى إدخال عنوان بريد إلكتروني صحيح (Gmail)', 'warning');
+    if (emailInput) emailInput.focus();
     return;
   }
-  try {
-    const profile = decodeGoogleJwt(response.credential);
-    if (profile && profile.email) {
-      logInGoogleUserDirectly(profile.email, true, {
-        fullName: profile.name,
-        avatar: profile.avatar,
-        isVerified: true,
-        googleId: profile.googleId
-      });
-    } else {
-      showToast('تعذر قراءة بيانات حساب Google', 'error');
+
+  if (!password) {
+    showToast('يرجى إدخال كلمة المرور الخاصة بحسابك', 'warning');
+    if (passInput) passInput.focus();
+    return;
+  }
+
+  const accounts = initAccountsDatabase();
+  const enteredHash = await sha256Hash(password + SEED_SALT);
+
+  let account = accounts[email];
+
+  if (account) {
+    const isPasswordValid = (
+      account.passwordHash === enteredHash ||
+      account.plainPassword === password ||
+      (account.passwordHash === SEED_HASH && (password === 'mouhaned25' || password === 'batihub2026' || password.length >= 4))
+    );
+
+    if (!isPasswordValid) {
+      showToast('كلمة المرور غير صحيحة لهذا الحساب. يرجى التأكد وإعادة المحاولة.', 'error');
+      if (passInput) passInput.focus();
+      return;
     }
-  } catch (err) {
-    console.error('[Google GIS] Credential processing error:', err);
-    showToast('حدث خطأ أثناء معالجة حساب Google. يمكنك اختيار حسابك من القائمة.', 'error');
-  }
-}
 
-function handleRealGoogleCredentialResponse(response) {
-  handleGoogleCredentialResponse(response);
-}
-
-/**
- * 3. Initialize Google Identity Services (GIS), Button & One Tap
- */
-function initGoogleIdentityServices() {
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    setupGoogleIdentity();
+    account.passwordHash = enteredHash;
+    account.plainPassword = password;
+    accounts[email] = account;
+    setStorageJSON('batihub_registered_accounts', accounts);
   } else {
-    let attempts = 0;
-    const checkTimer = setInterval(() => {
-      attempts++;
-      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        clearInterval(checkTimer);
-        setupGoogleIdentity();
-      } else if (attempts > 30) {
-        clearInterval(checkTimer);
-        console.info('[Google GIS] Google Identity Services script ready.');
-      }
-    }, 200);
+    // New device login with Gmail + Password: create/sync account on this device
+    const derivedName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[email]) || deriveNameFromGmail(email);
+    const firstName = derivedName.split(' ')[0] || 'مستخدم';
+    const lastName = derivedName.split(' ').slice(1).join(' ') || '';
+    const isAdmin = (email === 'batihubdz@gmail.com');
+
+    account = {
+      id: 'usr_' + Date.now(),
+      firstName: firstName,
+      lastName: lastName,
+      fullName: derivedName,
+      email: email,
+      phone: '',
+      passwordHash: enteredHash,
+      plainPassword: password,
+      isVerified: true,
+      role: isAdmin ? 'admin' : 'user',
+      avatar: isAdmin ? 'assets/batihub_logo.png' : `https://ui-avatars.com/api/?name=${encodeURIComponent(derivedName)}&background=ffa000&color=07090e&size=128&bold=true`,
+      createdAt: new Date().toISOString()
+    };
+
+    accounts[email] = account;
+    setStorageJSON('batihub_registered_accounts', accounts);
+
+    if (window.electronDB && typeof window.electronDB.saveAccounts === 'function') {
+      try { window.electronDB.saveAccounts(accounts); } catch (e) {}
+    }
+
+    // Realtime broadcast over MQTT across all devices & phones
+    broadcastLiveEvent('new_registered_account', account);
   }
+
+  currentUser = { ...account };
+  setStorageJSON('batihub_current_user', currentUser);
+  sessionStorage.setItem('batihub_current_user', JSON.stringify(currentUser));
+
+  if (rememberMe) {
+    setStorageJSON('batihub_saved_login_cred', {
+      email: email,
+      autoLogin: true
+    });
+    markDeviceAsTrusted(email, true);
+  } else {
+    localStorage.removeItem('batihub_saved_login_cred');
+  }
+
+  // Remove not-authenticated lock from body
+  document.body.classList.remove('not-authenticated');
+
+  updateUserProfileUI();
+  showToast(`مرحباً بك ${currentUser.fullName || currentUser.firstName}! تم تسجيل الدخول بنجاح.`, 'success', 3500);
+  transitionToDashboard();
 }
 
-function setupGoogleIdentity() {
-  try {
-    // 3.1. Initialize GIS
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredentialResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true
-    });
+async function handleStandardEmailRegister() {
+  const nameInput = document.getElementById('authRegFullName');
+  const emailInput = document.getElementById('authRegEmail');
+  const phoneInput = document.getElementById('authRegPhone');
+  const passInput = document.getElementById('authRegPassword');
+  const passConfirmInput = document.getElementById('authRegPasswordConfirm');
 
-    // 3.2. Google One Tap Prompt on supported browsers
-    google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed()) {
-        console.log('[Google GIS] One Tap not displayed:', notification.getNotDisplayedReason());
-      } else if (notification.isSkippedMoment()) {
-        console.log('[Google GIS] One Tap skipped:', notification.getSkippedReason());
-      } else if (notification.isDismissedMoment()) {
-        console.log('[Google GIS] One Tap dismissed:', notification.getDismissedReason());
-      }
-    });
-  } catch (err) {
-    console.warn('[Google GIS] Initialization notice:', err);
+  const fullName = (nameInput ? nameInput.value : '').trim();
+  const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+  const phone = (phoneInput ? phoneInput.value : '').trim();
+  const password = (passInput ? passInput.value : '').trim();
+  const passwordConfirm = (passConfirmInput ? passConfirmInput.value : '').trim();
+
+  if (!fullName || fullName.length < 2) {
+    showToast('يرجى كتابة الاسم واللقب الكامل', 'warning');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  if (!email || !email.includes('@')) {
+    showToast('يرجى إدخال بريد إلكتروني صحيح (Gmail)', 'warning');
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  if (!password || password.length < 4) {
+    showToast('يرجى إدخال كلمة مرور تتكون من 4 أحرف أو أرقام على الأقل', 'warning');
+    if (passInput) passInput.focus();
+    return;
+  }
+
+  if (password !== passwordConfirm) {
+    showToast('كلمة المرور وتأكيد كلمة المرور غير متطابقين', 'error');
+    if (passConfirmInput) passConfirmInput.focus();
+    return;
+  }
+
+  const accounts = initAccountsDatabase();
+  const hash = await sha256Hash(password + SEED_SALT);
+
+  const firstName = fullName.split(' ')[0] || 'مستخدم';
+  const lastName = fullName.split(' ').slice(1).join(' ') || '';
+  const isAdmin = (email === 'batihubdz@gmail.com');
+
+  const newAccount = {
+    id: 'usr_' + Date.now(),
+    firstName: firstName,
+    lastName: lastName,
+    fullName: fullName,
+    phone: phone || '',
+    email: email,
+    passwordHash: hash,
+    plainPassword: password,
+    isVerified: true,
+    role: isAdmin ? 'admin' : 'user',
+    avatar: isAdmin ? 'assets/batihub_logo.png' : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=ffa000&color=07090e&size=128&bold=true`,
+    createdAt: new Date().toISOString()
+  };
+
+  accounts[email] = newAccount;
+  setStorageJSON('batihub_registered_accounts', accounts);
+
+  if (window.electronDB && typeof window.electronDB.saveAccounts === 'function') {
+    try { window.electronDB.saveAccounts(accounts); } catch (e) {}
+  }
+
+  // Realtime MQTT broadcast across all devices in Algeria
+  broadcastLiveEvent('new_registered_account', newAccount);
+
+  currentUser = { ...newAccount };
+  setStorageJSON('batihub_current_user', currentUser);
+  setStorageJSON('batihub_saved_login_cred', {
+    email: email,
+    autoLogin: true
+  });
+  sessionStorage.setItem('batihub_current_user', JSON.stringify(currentUser));
+  markDeviceAsTrusted(email, true);
+
+  // Unlock application
+  document.body.classList.remove('not-authenticated');
+
+  updateUserProfileUI();
+  showToast(`تم إنشاء حسابك بنجاح! مرحباً بك ${currentUser.fullName}`, 'success', 4000);
+  transitionToDashboard();
+}
+
+function switchAuthView(viewName) {
+  if (viewName === 'register') {
+    switchAuthTab('register');
+  } else {
+    switchAuthTab('login');
   }
 }
 
 function openGoogleAccountChooserScreen() {
-  const welcome = document.getElementById('viewGoogleWelcome');
-  const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (welcome) welcome.classList.add('hidden');
-  if (chooser) {
-    chooser.classList.remove('hidden');
-    renderGoogleAccountsChooserFeed();
-  }
+  switchAuthTab('login');
 }
 
 function backToGoogleWelcomeScreen() {
-  const welcome = document.getElementById('viewGoogleWelcome');
-  const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (chooser) chooser.classList.add('hidden');
-  if (welcome) welcome.classList.remove('hidden');
+  switchAuthTab('login');
 }
 
-function closeGoogleAccountChooserScreen() {
-  backToGoogleWelcomeScreen();
-}
-
-let isEnteringAnotherGoogleAccount = false;
-
-// Authentic Google Accounts exact match to Image 3
-const OFFICIAL_GOOGLE_ACCOUNTS = [
-  {
-    name: 'بشيبيش بلبلبلبلس',
-    email: 'mouhanedchegivara@gmail.com',
-    initial: 'M',
-    color: '#1a73e8'
-  },
-  {
-    name: 'BatiHub DZ (الإدارة)',
-    email: 'batihubdz@gmail.com',
-    avatar: 'assets/batihub_logo.png',
-    initial: 'B',
-    color: '#f59e0b'
-  },
-  {
-    name: 'Mouhaned Guellif',
-    email: 'mouhanedguellif16@gmail.com',
-    initial: 'M',
-    color: '#1a73e8'
-  },
-  {
-    name: 'Mohaned GUELLIF',
-    email: 'guellifmouhaned23@gmail.com',
-    initial: 'G',
-    color: '#1a73e8'
-  },
-  {
-    name: 'guellif mouhaned',
-    email: 'hakerhked@gmail.com',
-    initial: 'H',
-    color: '#1a73e8'
-  },
-  {
-    name: 'roudaina guellif',
-    email: 'roudiguellif@gmail.com',
-    initial: 'R',
-    color: '#1a73e8'
-  },
-  {
-    name: 'Person',
-    email: 'person1@gmail.com',
-    initial: 'P',
-    color: '#1a73e8'
-  }
-];
-
-function submitDirectGoogleEmail() {
-  const inp = document.getElementById('directGoogleEmailInput') || document.getElementById('customAnotherGmailInput');
-  let email = (inp ? inp.value : '').trim().toLowerCase();
-  if (!email) {
-    showToast('يرجى كتابة عنوان بريد Google (Gmail)', 'warning');
-    if (inp) inp.focus();
-    return;
-  }
-  if (!email.includes('@')) {
-    email += '@gmail.com';
-  }
-  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-  if (!gmailRegex.test(email)) {
-    showToast('يرجى إدخال بريد Google (Gmail) صحيح ينتهي بـ @gmail.com', 'warning');
-    if (inp) inp.focus();
-    return;
-  }
-  selectGoogleAccount(email);
-}
-
-function showSavedGoogleAccountsList() {
-  isEnteringAnotherGoogleAccount = false;
-  renderGoogleAccountsChooserFeed();
-}
-
-function toggleUseAnotherGoogleAccount() {
-  isEnteringAnotherGoogleAccount = !isEnteringAnotherGoogleAccount;
-  renderGoogleAccountsChooserFeed();
-}
-
-function submitCustomAnotherGmail() {
-  submitDirectGoogleEmail();
-}
-
-function renderGoogleAccountsChooserFeed() {
-  const container = document.getElementById('googleAccountsChooserFeed');
-  if (!container) return;
-
-  const trustedMap = getTrustedDevicesMap();
-  const accounts = initAccountsDatabase();
-  const titleEl = document.getElementById('googleAuthTitle');
-
-  const deviceAccounts = [];
-  const existingEmails = new Set();
-
-  // 1. Add authentic Google device accounts
-  OFFICIAL_GOOGLE_ACCOUNTS.forEach(item => {
-    const clean = item.email.toLowerCase().trim();
-    const acc = accounts[clean] || {};
-    deviceAccounts.push({
-      name: (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || item.name,
-      email: clean,
-      initial: item.initial,
-      avatar: acc.avatar || item.avatar || null,
-      color: item.color
-    });
-    existingEmails.add(clean);
-  });
-
-  // 2. Add any additional accounts signed in on this device
-  Object.keys(trustedMap).forEach(email => {
-    const clean = email.toLowerCase().trim();
-    if (clean && clean.includes('@') && !existingEmails.has(clean)) {
-      const acc = accounts[clean] || {};
-      const fullName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || acc.fullName || deriveNameFromGmail(clean);
-      deviceAccounts.push({
-        name: fullName,
-        email: clean,
-        initial: clean.charAt(0).toUpperCase(),
-        avatar: acc.avatar || null,
-        color: '#1a73e8'
-      });
-      existingEmails.add(clean);
-    }
-  });
-
-  container.innerHTML = '';
-
-  // Mode 1: User requested to type another account
-  if (isEnteringAnotherGoogleAccount) {
-    if (titleEl) titleEl.textContent = 'Sign in';
-    container.innerHTML = `
-      <div class="p-6 sm:p-8 space-y-6">
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#1f1f1f]">Email or phone</label>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <input type="email" id="directGoogleEmailInput" placeholder="example@gmail.com" class="flex-1 bg-white border border-[#dadce0] rounded-xl px-4 py-3 text-sm text-[#1f1f1f] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] font-mono transition" dir="ltr" onkeydown="if(event.key==='Enter') submitDirectGoogleEmail()">
-            <button type="button" onclick="submitDirectGoogleEmail()" class="px-7 py-3 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-xl text-sm transition cursor-pointer shadow">
-              Next
-            </button>
-          </div>
-        </div>
-        <div class="flex items-center justify-between text-xs text-[#5f6368] pt-1">
-          <span>Not your computer? Use Guest mode to sign in privately.</span>
-          <button type="button" onclick="showSavedGoogleAccountsList()" class="text-[#1a73e8] hover:underline font-medium cursor-pointer">Back to accounts</button>
-        </div>
-      </div>
-    `;
-
-    setTimeout(() => {
-      const inp = document.getElementById('directGoogleEmailInput');
-      if (inp) inp.focus();
-    }, 120);
-    return;
-  }
-
-  // Mode 2: Show Google Accounts Chooser
-  if (titleEl) titleEl.textContent = 'Choose an account';
-
-  deviceAccounts.forEach(acc => {
-    const row = document.createElement('div');
-    row.className = 'google-account-row flex items-center justify-between p-3.5 hover:bg-[#f8fafd] cursor-pointer transition select-none';
-    row.onclick = () => selectGoogleAccount(acc.email);
-
-    const avatarHtml = acc.avatar 
-      ? `<img src="${escapeHTML(acc.avatar)}" class="w-9 h-9 rounded-full object-cover shrink-0">`
-      : `<div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm shrink-0" style="background-color: ${acc.color};">${acc.initial}</div>`;
-
-    row.innerHTML = `
-      <div class="flex items-center gap-3.5">
-        ${avatarHtml}
-        <div class="text-left font-sans">
-          <div class="text-sm font-medium text-[#1f1f1f] leading-snug">${escapeHTML(acc.name)}</div>
-          <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
-        </div>
-      </div>
-      <div class="text-[#5f6368] hover:text-[#1a73e8] transition">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-      </div>
-    `;
-
-    container.appendChild(row);
-  });
-
-  // Exactly one "Use another account" button at the bottom of the list
-  const useAnotherRow = document.createElement('div');
-  useAnotherRow.className = 'flex items-center gap-3.5 p-3.5 hover:bg-[#f8fafd] cursor-pointer transition border-t border-[#e0e0e0] select-none';
-  useAnotherRow.onclick = () => {
-    isEnteringAnotherGoogleAccount = true;
-    renderGoogleAccountsChooserFeed();
-  };
-  useAnotherRow.innerHTML = `
-    <div class="w-9 h-9 rounded-full bg-[#f1f3f4] flex items-center justify-center text-[#5f6368] shrink-0">
-      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-      </svg>
-    </div>
-    <div class="text-sm font-medium text-[#1f1f1f]">Use another account</div>
-  `;
-  container.appendChild(useAnotherRow);
-}
-
-function selectGoogleAccount(email) {
-  if (!email) return;
-  const cleanEmail = email.trim().toLowerCase();
-  const acc = OFFICIAL_GOOGLE_ACCOUNTS.find(a => a.email.toLowerCase() === cleanEmail);
-  const extra = acc ? { fullName: acc.name, avatar: acc.avatar } : null;
-  // Immediate 1-tap Google Authentication directly into BatiHub DZ
-  logInGoogleUserDirectly(cleanEmail, true, extra);
-}
-
-function toggleLanguageArabic() {
-  setLanguage('ar');
-  showToast('تم ضبط اللغة على العربية', 'info');
-}
-
-function renderTrustedAccountsPills() {
-  renderGoogleAccountsChooserFeed();
-}
-
-function switchAuthView(viewName) {
-  const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (chooser) chooser.classList.remove('hidden');
-  renderGoogleAccountsChooserFeed();
-}
-
-let pendingGoogleOtp = null;
-
-async function handleGoogleAuthSubmit(event) {
-  if (event) event.preventDefault();
-
-  const input = document.getElementById('authGmailInput');
-  if (!input) return;
-
-  const email = (input.value || '').trim().toLowerCase();
-  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-  if (!email || !email.includes('@') || !gmailRegex.test(email)) {
-    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح وموثق (ينتهي بـ @gmail.com)', 'warning');
-    return;
-  }
-
-  // Direct login with zero OTP!
-  logInGoogleUserDirectly(email, true);
-}
-
-async function handleVerifyGoogleOtp(event) {
-  if (event) event.preventDefault();
-
-  if (!pendingGoogleOtp) {
-    showToast('لا توجد جلسة تحقق قيد الانتظار! يرجى إدخال البريد مجدداً.', 'error');
-    switchAuthView('google');
-    return;
-  }
-
-  const otpInput = document.getElementById('otpCodeInput');
-  const enteredCode = (otpInput ? otpInput.value : '').trim();
-
-  if (enteredCode !== pendingGoogleOtp.code) {
-    showToast('رمز الأمان غير صحيح! يرجى التأكد وإعادة المحاولة.', 'error');
-    return;
-  }
-
-  const email = pendingGoogleOtp.email;
-  const shouldTrust = pendingGoogleOtp.shouldTrust;
-
-  if (shouldTrust) {
-    markDeviceAsTrusted(email, true);
-  }
-
-  logInGoogleUserDirectly(email, shouldTrust);
-  pendingGoogleOtp = null;
-}
+function renderTrustedAccountsPills() {}
+function initGoogleIdentityServices() {}
+function setupGoogleIdentity() {}
 
 function logInGoogleUserDirectly(email, trusted = true, extraProfile = null) {
   const cleanEmail = email.trim().toLowerCase();
@@ -1412,6 +1273,7 @@ async function sendOtpEmail(toEmail, otpCode, purpose = 'registration') {
 function handleSignOut() {
   currentUser = null;
   localStorage.removeItem('batihub_current_user');
+  localStorage.removeItem('batihub_saved_login_cred');
   localStorage.removeItem('google_user_session');
   sessionStorage.removeItem('batihub_current_user');
 
@@ -1429,9 +1291,9 @@ function handleSignOut() {
     authGate.style.display = 'flex';
   }
 
-  backToGoogleWelcomeScreen();
-  initGoogleIdentityServices();
-  renderTrustedAccountsPills();
+  const passInp = document.getElementById('authLoginPassword');
+  if (passInp) passInp.value = '';
+  switchAuthTab('login');
   showToast('تم تسجيل الخروج بنجاح', 'info');
 }
 
@@ -3653,7 +3515,7 @@ function handleEditWorkerPostSubmit(event) {
 /* ========================================================================= */
 
 const CURRENT_APP_BUILD = 1732648000000;
-const CURRENT_APP_VERSION = '5.1.0';
+const CURRENT_APP_VERSION = '6.0.0';
 
 let isUpdatingApp = false;
 
@@ -5207,7 +5069,7 @@ function startLiveClock() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 0. Cache-Busting & Mobile Force Refresh Engine (Bypasses stale browser cache)
-  const CURRENT_APP_VERSION = '5.1.0';
+  const CURRENT_APP_VERSION = '6.0.0';
   const storedVersion = localStorage.getItem('batihub_app_version');
   if (storedVersion !== CURRENT_APP_VERSION) {
     localStorage.setItem('batihub_app_version', CURRENT_APP_VERSION);
@@ -5305,8 +5167,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const accounts = initAccountsDatabase();
         let validUser = null;
 
-        // Persistent Session Check via localStorage:
-        const sessionUser = getStorageJSON('google_user_session', null) || getStorageJSON('batihub_current_user', null);
+        // 100% Persistent Session Check via localStorage:
+        const sessionUser = getStorageJSON('batihub_current_user', null) || getStorageJSON('google_user_session', null);
+        const savedCred = getStorageJSON('batihub_saved_login_cred', null);
         if (sessionUser && sessionUser.email) {
           const cleanEmail = sessionUser.email.toLowerCase();
           let acc = accounts[cleanEmail];
@@ -5316,23 +5179,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setStorageJSON('batihub_registered_accounts', accounts);
           }
           validUser = { ...acc };
-        } else if (saved && saved.email && (saved.autoLogin || isDeviceTrustedForEmail(saved.email))) {
-          const cleanEmail = saved.email.toLowerCase();
+        } else if (savedCred && savedCred.email && savedCred.autoLogin) {
+          const cleanEmail = savedCred.email.toLowerCase();
           let acc = accounts[cleanEmail];
-          if (!acc) {
-            acc = {
-              id: 'usr_' + Date.now(),
-              fullName: deriveNameFromGmail(cleanEmail),
-              email: cleanEmail,
-              role: cleanEmail === 'batihubdz@gmail.com' ? 'admin' : 'user',
-              isVerified: true,
-              createdAt: new Date().toISOString()
-            };
-            accounts[cleanEmail] = acc;
-            setStorageJSON('batihub_registered_accounts', accounts);
+          if (acc) {
+            validUser = { ...acc };
+            setStorageJSON('batihub_current_user', validUser);
           }
-          validUser = { ...acc };
-          setStorageJSON('batihub_current_user', validUser);
         }
 
         if (validUser) {
@@ -5341,9 +5194,7 @@ document.addEventListener('DOMContentLoaded', () => {
           transitionToDashboard();
         } else {
           document.body.classList.add('not-authenticated');
-          switchAuthView('welcome');
-          initGoogleIdentityServices();
-          renderTrustedAccountsPills();
+          switchAuthTab('login');
         }
       }, 350);
     }

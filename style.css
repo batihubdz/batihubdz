@@ -103,6 +103,36 @@
   box-shadow: 0 0 12px rgba(255, 160, 0, 0.6);
 }
 
+/* Google GIS Lock Screen Enforcement (body.not-authenticated) */
+body.not-authenticated {
+  overflow: hidden !important;
+}
+
+body.not-authenticated #appDashboard {
+  display: none !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+body.not-authenticated #authGateScreen {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+body:not(.not-authenticated) #authGateScreen {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+body:not(.not-authenticated) #appDashboard {
+  display: block !important;
+  pointer-events: auto !important;
+}
+
 /* Auth Gate Screen */
 #authGateScreen {
   position: fixed;

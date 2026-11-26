@@ -54,11 +54,8 @@
     }
   </script>
   
-  <!-- Official Google Identity Services SDK (Real Google Sign-In & One Tap) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=4.3.0">
+  <link rel="stylesheet" href="style.css?v=4.4.0">
 </head>
 <body class="bg-bh-bg text-slate-100 font-sans antialiased min-h-screen selection:bg-bh-yellow selection:text-slate-950">
 
@@ -105,42 +102,11 @@
   <!-- 2. AUTHENTICATION GATE SCREEN                                             -->
   <!-- ========================================================================= -->
   <!-- ========================================================================= -->
-  <!-- 2. AUTHENTICATION GATE SCREEN                                             -->
-  <!-- ========================================================================= -->
+  <!-- 2. AUTHENTICATION GATE SCREEN -->
   <div id="authGateScreen" class="fixed inset-0 z-[99990] flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-[#07090e]">
 
-    <!-- VIEW A: WELCOME TO BATI HUB DZ -->
-    <div id="viewGoogleWelcome" class="w-full max-w-md mx-auto text-center space-y-5 animate-fade-in">
-      <div class="flex flex-col items-center space-y-3">
-        <img src="assets/batihub_logo.png" alt="BatiHub DZ" class="w-24 sm:w-28 h-auto object-contain drop-shadow-2xl">
-        <h1 class="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">Welcome to BatiHub DZ!</h1>
-        <p class="text-xs sm:text-sm text-slate-400 font-sans max-w-xs mx-auto">منصة المحترفين وعروض العمل والتصاميم في الجزائر</p>
-      </div>
-
-      <!-- Real Google Identity Services (GIS) Native Button Container -->
-      <div id="googleRealGsiButtonWelcome" class="flex justify-center items-center my-2 min-h-[44px]"></div>
-
-      <!-- Blue "Continue with Google" pill button -->
-      <div class="pt-1">
-        <button type="button" onclick="triggerRealGoogleSignIn()" class="w-full py-3.5 px-6 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-full text-sm sm:text-base shadow-xl hover:shadow-2xl transition flex items-center justify-center gap-3 cursor-pointer">
-          <!-- Official White Google 'G' Icon -->
-          <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-            <path fill="#ffffff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#ffffff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#ffffff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#ffffff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span class="font-sans font-medium text-sm sm:text-base">Continue with Google</span>
-        </button>
-      </div>
-
-      <div class="pt-2">
-        <p class="text-[11px] text-slate-500 font-sans">تسجيل دخول فوري وآمن بحساب Google الحقيقي على جهازك بدون أي رمز تحقق</p>
-      </div>
-    </div>
-
-    <!-- VIEW B: AUTHENTIC GOOGLE ACCOUNT CHOOSER (EXACT MATCH TO GOOGLE OAUTH SCREENSHOT) -->
-    <div id="viewGoogleAccountChooser" class="hidden w-full max-w-4xl mx-auto bg-white text-[#1f1f1f] rounded-[28px] border border-[#dadce0] shadow-[0_4px_24px_rgba(0,0,0,0.12)] p-6 sm:p-10 font-sans animate-fade-in text-left" dir="ltr">
+    <!-- AUTHENTIC GOOGLE ACCOUNT CHOOSER (PRIMARY & DIRECT AUTH SCREEN) -->
+    <div id="viewGoogleAccountChooser" class="w-full max-w-4xl mx-auto bg-white text-[#1f1f1f] rounded-[28px] border border-[#dadce0] shadow-[0_4px_24px_rgba(0,0,0,0.12)] p-6 sm:p-10 font-sans animate-fade-in text-left" dir="ltr">
       
       <!-- Top Google Sign-In Bar -->
       <div class="flex items-center justify-between pb-6 border-b border-[#f1f3f4] mb-6">
@@ -154,10 +120,6 @@
           </svg>
           <span class="text-xs sm:text-sm font-medium text-[#5f6368]">Sign in with Google</span>
         </div>
-        <button type="button" onclick="closeGoogleAccountChooserScreen()" class="text-xs text-[#5f6368] hover:text-[#1f1f1f] flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#f1f3f4] transition cursor-pointer">
-          <i class="fa-solid fa-arrow-left text-xs"></i>
-          <span>Back</span>
-        </button>
       </div>
 
       <!-- Two-Column Google Account Chooser Layout -->
@@ -195,9 +157,6 @@
         <!-- Right Column: Google Accounts List Box -->
         <div class="md:col-span-7">
           <div class="border border-[#dadce0] rounded-2xl overflow-hidden bg-white shadow-sm">
-            <!-- Official Real Google Sign-In Button on Chooser -->
-            <div id="googleRealGsiButtonChooser" class="flex justify-center items-center p-3 border-b border-[#e0e0e0] bg-[#fafafa]"></div>
-
             <div id="googleAccountsChooserFeed" class="divide-y divide-[#e0e0e0] max-h-[460px] overflow-y-auto">
               <!-- Dynamically rendered accounts that actually logged in on THIS device -->
             </div>

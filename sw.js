@@ -1,10 +1,10 @@
-// BatiHub DZ - Progressive Web App Service Worker (v4.3.0 Live Realtime)
-const CACHE_NAME = 'batihub-dz-v4.3.0-live-realtime';
+// BatiHub DZ - Progressive Web App Service Worker (v4.4.0 Live Realtime)
+const CACHE_NAME = 'batihub-dz-v4.4.0-mobile-force-sync';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=4.3.0',
-  './app.js?v=4.3.0',
+  './style.css?v=4.4.0',
+  './app.js?v=4.4.0',
   './manifest.json',
   './assets/mqtt.min.js?v=4.1.0',
   './assets/batihub_logo.png',
@@ -26,6 +26,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
+      // Aggressively purge all old caches
       return Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );

@@ -828,85 +828,8 @@ function handleRealGoogleCredentialResponse(response) {
   }
 }
 
-function initRealGoogleIdentityServices() {
-  if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-    setTimeout(initRealGoogleIdentityServices, 400);
-    return;
-  }
-
-  try {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleRealGoogleCredentialResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      itp_support: true
-    });
-
-    // 1. Render Google Sign In button on Welcome screen
-    const welcomeContainer = document.getElementById('googleRealGsiButtonWelcome');
-    if (welcomeContainer) {
-      welcomeContainer.innerHTML = '';
-      google.accounts.id.renderButton(welcomeContainer, {
-        theme: 'outline',
-        size: 'large',
-        type: 'standard',
-        shape: 'pill',
-        text: 'continue_with',
-        logo_alignment: 'left',
-        width: 320
-      });
-    }
-
-    // 2. Render Google Sign In button inside Account Chooser screen
-    const chooserContainer = document.getElementById('googleRealGsiButtonChooser');
-    if (chooserContainer) {
-      chooserContainer.innerHTML = '';
-      google.accounts.id.renderButton(chooserContainer, {
-        theme: 'filled_blue',
-        size: 'large',
-        type: 'standard',
-        shape: 'pill',
-        text: 'signin_with',
-        logo_alignment: 'left',
-        width: 320
-      });
-    }
-
-    // 3. Trigger Google One Tap prompt natively (detects device's real Google accounts on PC and Android!)
-    google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed()) {
-        console.log('Google One Tap not displayed:', notification.getNotDisplayedReason());
-      } else if (notification.isSkippedMoment()) {
-        console.log('Google One Tap skipped:', notification.getSkippedReason());
-      }
-    });
-  } catch (err) {
-    console.warn('Google Identity Services init note:', err);
-  }
-}
-
-function triggerRealGoogleSignIn() {
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    try {
-      google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-          openGoogleAccountChooserScreen();
-        }
-      });
-      openGoogleAccountChooserScreen();
-    } catch(e) {
-      openGoogleAccountChooserScreen();
-    }
-  } else {
-    openGoogleAccountChooserScreen();
-  }
-}
-
 function openGoogleAccountChooserScreen() {
-  const welcome = document.getElementById('viewGoogleWelcome');
   const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (welcome) welcome.classList.add('hidden');
   if (chooser) {
     chooser.classList.remove('hidden');
     renderGoogleAccountsChooserFeed();
@@ -914,10 +837,18 @@ function openGoogleAccountChooserScreen() {
 }
 
 function closeGoogleAccountChooserScreen() {
-  const welcome = document.getElementById('viewGoogleWelcome');
-  const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (chooser) chooser.classList.add('hidden');
-  if (welcome) welcome.classList.remove('hidden');
+  // No-op: Chooser is the direct root authentication screen
+}
+
+function submitDirectGoogleEmail() {
+  const inp = document.getElementById('directGoogleEmailInput');
+  const email = (inp ? inp.value : '').trim().toLowerCase();
+  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  if (!email || !email.includes('@') || !gmailRegex.test(email)) {
+    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح ينتهي بـ @gmail.com', 'warning');
+    return;
+  }
+  selectGoogleAccount(email);
 }
 
 function renderGoogleAccountsChooserFeed() {
@@ -927,7 +858,7 @@ function renderGoogleAccountsChooserFeed() {
   const trustedMap = getTrustedDevicesMap();
   const accounts = initAccountsDatabase();
 
-  // ONLY list accounts that were actually used ON THIS SPECIFIC DEVICE (no hardcoded presets!)
+  // ONLY list accounts that were actually used ON THIS SPECIFIC DEVICE
   const deviceAccounts = [];
   const existingEmails = new Set();
 
@@ -950,16 +881,27 @@ function renderGoogleAccountsChooserFeed() {
   container.innerHTML = '';
 
   if (deviceAccounts.length === 0) {
-    // Clean prompt when no accounts are saved on this device yet
+    // Direct Google Sign-In Card (Email or phone)
     container.innerHTML = `
-      <div class="p-6 text-center text-[#5f6368] space-y-2 select-none">
-        <div class="w-10 h-10 mx-auto rounded-full bg-[#f1f3f4] flex items-center justify-center text-[#1a73e8] text-lg">
-          <i class="fa-brands fa-google"></i>
+      <div class="p-6 sm:p-8 space-y-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs sm:text-sm font-medium text-[#444746]">Email or phone</label>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input type="email" id="directGoogleEmailInput" placeholder="example@gmail.com" class="flex-1 bg-white border border-[#dadce0] rounded-xl px-4 py-3 text-sm text-[#1f1f1f] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] font-mono transition" dir="ltr" onkeydown="if(event.key==='Enter') submitDirectGoogleEmail()">
+            <button type="button" onclick="submitDirectGoogleEmail()" class="px-7 py-3 bg-[#1a73e8] hover:bg-[#1557b0] active:scale-98 text-white font-medium rounded-xl text-sm transition cursor-pointer shadow">
+              Next
+            </button>
+          </div>
         </div>
-        <div class="text-sm font-medium text-[#1f1f1f]">لا توجد حسابات مسجلة على هذا الجهاز بعد</div>
-        <div class="text-xs text-[#5f6368]">استخدم زر Google الرسمي أعلاه للدخول، أو اضغط "Use another account" بالأسفل</div>
+        <div class="pt-2">
+          <p class="text-xs text-[#5f6368]">Not your computer? Use Guest mode to sign in privately.</p>
+        </div>
       </div>
     `;
+    setTimeout(() => {
+      const inp = document.getElementById('directGoogleEmailInput');
+      if (inp) inp.focus();
+    }, 120);
     return;
   }
 
@@ -1028,10 +970,8 @@ function renderTrustedAccountsPills() {
 }
 
 function switchAuthView(viewName) {
-  const welcome = document.getElementById('viewGoogleWelcome');
   const chooser = document.getElementById('viewGoogleAccountChooser');
-  if (welcome) welcome.classList.remove('hidden');
-  if (chooser) chooser.classList.add('hidden');
+  if (chooser) chooser.classList.remove('hidden');
   renderGoogleAccountsChooserFeed();
 }
 
@@ -3499,8 +3439,8 @@ function handleEditWorkerPostSubmit(event) {
 /* 12.7. REALTIME LIVE APP UPDATER (INSTANT UPDATE ACROSS ALL PHONES & APPS) */
 /* ========================================================================= */
 
-const CURRENT_APP_BUILD = 1732643500000;
-const CURRENT_APP_VERSION = '4.3.0';
+const CURRENT_APP_BUILD = 1732645100000;
+const CURRENT_APP_VERSION = '4.4.0';
 
 let isUpdatingApp = false;
 
@@ -5115,7 +5055,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initLiveSyncEngine();
   initNetworkEnforcement();
   initAutoAppUpdater();
-  initRealGoogleIdentityServices();
 
   // 4. Initialize calculator history tape and saved credentials
   renderCalcHistory();
@@ -5189,7 +5128,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           switchAuthView('google');
           renderTrustedAccountsPills();
-          initRealGoogleIdentityServices();
         }
       }, 350);
     }

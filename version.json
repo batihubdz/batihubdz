@@ -1,7 +1,7 @@
 {
-  "version": "4.4.0",
-  "build": 1732645100000,
+  "version": "4.5.0",
+  "build": 1732645500000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Direct authentic Google Account Chooser screen, removed blue welcome view, force live sync across all devices",
-  "timestamp": "2026-11-26T18:57:00Z"
+  "releaseNotes": "100% purged all seed accounts from chooser, native Google device picker integration, live v4.5.0 sync",
+  "timestamp": "2026-11-26T19:08:00Z"
 }

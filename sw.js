@@ -1,10 +1,10 @@
-// BatiHub DZ - Progressive Web App Service Worker (v4.4.0 Live Realtime)
-const CACHE_NAME = 'batihub-dz-v4.4.0-mobile-force-sync';
+// BatiHub DZ - Progressive Web App Service Worker (v4.5.0 Live Realtime)
+const CACHE_NAME = 'batihub-dz-v4.5.0-device-accounts-fix';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=4.4.0',
-  './app.js?v=4.4.0',
+  './style.css?v=4.5.0',
+  './app.js?v=4.5.0',
   './manifest.json',
   './assets/mqtt.min.js?v=4.1.0',
   './assets/batihub_logo.png',
@@ -19,20 +19,17 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
     })
   );
-  // Force active immediately without waiting
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      // Aggressively purge all old caches
       return Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
     })
   );
-  // Take control of all pages and mobile clients immediately
   self.clients.claim();
 });
 
@@ -47,7 +44,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  // 1. NEVER cache version.json - always pull live from server
   if (url.pathname.endsWith('version.json')) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' }).catch(() => {
@@ -59,7 +55,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Code assets: Network-first with fresh fallback to cache
   const isCodeAsset = url.pathname.endsWith('.js') || 
                       url.pathname.endsWith('.html') || 
                       url.pathname.endsWith('.css') || 
@@ -82,7 +77,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Static Media Assets (images, fonts)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((resp) => {

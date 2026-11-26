@@ -863,6 +863,118 @@ function closeGoogleAccountChooserScreen() {
 }
 
 let isEnteringAnotherGoogleAccount = false;
+let pendingConsentAccount = null;
+
+const DEFAULT_GOOGLE_DEVICE_ACCOUNTS = [
+  {
+    name: 'Mouhaned Guellif',
+    email: 'mouhanedguellif16@gmail.com',
+    initial: 'M',
+    color: '#1a73e8'
+  },
+  {
+    name: 'Mouhaned Che Givara',
+    email: 'mouhanedchegivara@gmail.com',
+    initial: 'M',
+    color: '#0f9d58'
+  },
+  {
+    name: 'Guellif Mouhaned',
+    email: 'guellifmouhaned23@gmail.com',
+    initial: 'G',
+    color: '#7b1fa2'
+  },
+  {
+    name: 'tomy dev',
+    email: 'devtomy29@gmail.com',
+    initial: 'T',
+    color: '#673ab7'
+  },
+  {
+    name: 'Algeria Shield',
+    email: 'algeriashieldrp.04@gmail.com',
+    initial: 'A',
+    color: '#d93025'
+  },
+  {
+    name: 'BatiHub DZ (الإدارة)',
+    email: 'batihubdz@gmail.com',
+    avatar: 'assets/batihub_logo.png',
+    initial: 'B',
+    color: '#f59e0b'
+  }
+];
+
+function isGoogleAccountAuthorized(email) {
+  if (!email) return false;
+  const cleanEmail = email.trim().toLowerCase();
+  const authorizedSet = getStorageJSON('batihub_google_authorized_accounts', []);
+  return Array.isArray(authorizedSet) && authorizedSet.includes(cleanEmail);
+}
+
+function markGoogleAccountAuthorized(email) {
+  if (!email) return;
+  const cleanEmail = email.trim().toLowerCase();
+  let authorizedSet = getStorageJSON('batihub_google_authorized_accounts', []);
+  if (!Array.isArray(authorizedSet)) authorizedSet = [];
+  if (!authorizedSet.includes(cleanEmail)) {
+    authorizedSet.push(cleanEmail);
+    setStorageJSON('batihub_google_authorized_accounts', authorizedSet);
+  }
+}
+
+function openGoogleOAuthConsent(email) {
+  const cleanEmail = email.trim().toLowerCase();
+  const fullName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[cleanEmail]) || deriveNameFromGmail(cleanEmail);
+  const avatarUrl = (cleanEmail === 'batihubdz@gmail.com')
+    ? 'assets/batihub_logo.png'
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=1a73e8&color=ffffff&size=128&bold=true`;
+
+  pendingConsentAccount = {
+    email: cleanEmail,
+    fullName: fullName,
+    avatar: avatarUrl
+  };
+
+  const modal = document.getElementById('googleOAuthConsentModal');
+  const nameEl = document.getElementById('consentUserName');
+  const emailEl = document.getElementById('consentUserEmail');
+  const avatarEl = document.getElementById('consentUserAvatar');
+
+  if (nameEl) nameEl.textContent = fullName;
+  if (emailEl) emailEl.textContent = cleanEmail;
+  if (avatarEl) {
+    if (avatarUrl.startsWith('http') || avatarUrl.startsWith('assets/')) {
+      avatarEl.innerHTML = `<img src="${avatarUrl}" class="w-full h-full rounded-full object-cover">`;
+    } else {
+      avatarEl.textContent = fullName.charAt(0).toUpperCase();
+    }
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function confirmGoogleOAuthConsent() {
+  if (!pendingConsentAccount) return;
+  const email = pendingConsentAccount.email;
+  const extraProfile = { ...pendingConsentAccount };
+
+  // Grant permission & mark account authorized on this device
+  markGoogleAccountAuthorized(email);
+
+  const modal = document.getElementById('googleOAuthConsentModal');
+  if (modal) modal.classList.add('hidden');
+
+  showToast('تم منح تصريح Google وتسجيل الدخول بنجاح!', 'success');
+  logInGoogleUserDirectly(email, true, extraProfile);
+  pendingConsentAccount = null;
+}
+
+function cancelGoogleOAuthConsent() {
+  pendingConsentAccount = null;
+  const modal = document.getElementById('googleOAuthConsentModal');
+  if (modal) modal.classList.add('hidden');
+}
 
 function submitDirectGoogleEmail() {
   const inp = document.getElementById('directGoogleEmailInput') || document.getElementById('customAnotherGmailInput');
@@ -904,32 +1016,39 @@ function renderGoogleAccountsChooserFeed() {
   const trustedMap = getTrustedDevicesMap();
   const accounts = initAccountsDatabase();
 
-  // ONLY list accounts that the user actually signed into on this specific device
   const deviceAccounts = [];
   const existingEmails = new Set();
 
-  const SEED_EMAILS = new Set([
-    'mouhanedchegivara@gmail.com',
-    'batihubdz@gmail.com',
-    'mouhanedguellif16@gmail.com',
-    'guellifmouhaned23@gmail.com',
-    'hakerhked@gmail.com',
-    'roudiguellif@gmail.com',
-    'person1@gmail.com'
-  ]);
+  // 1. Add default Google device accounts
+  DEFAULT_GOOGLE_DEVICE_ACCOUNTS.forEach(item => {
+    const clean = item.email.toLowerCase().trim();
+    const acc = accounts[clean] || {};
+    const isAuth = isGoogleAccountAuthorized(clean);
+    deviceAccounts.push({
+      name: (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || item.name,
+      email: clean,
+      initial: item.initial,
+      avatar: acc.avatar || item.avatar || null,
+      color: item.color,
+      signedOut: !isAuth
+    });
+    existingEmails.add(clean);
+  });
 
+  // 2. Add any additional accounts signed in on this device
   Object.keys(trustedMap).forEach(email => {
     const clean = email.toLowerCase().trim();
-    if (clean && clean.includes('@') && !SEED_EMAILS.has(clean) && !existingEmails.has(clean)) {
+    if (clean && clean.includes('@') && !existingEmails.has(clean)) {
       const acc = accounts[clean] || {};
       const fullName = (KNOWN_GOOGLE_NAMES && KNOWN_GOOGLE_NAMES[clean]) || acc.fullName || deriveNameFromGmail(clean);
+      const isAuth = isGoogleAccountAuthorized(clean);
       deviceAccounts.push({
         name: fullName,
         email: clean,
         initial: clean.charAt(0).toUpperCase(),
         avatar: acc.avatar || null,
         color: '#1a73e8',
-        signedOut: false
+        signedOut: !isAuth
       });
       existingEmails.add(clean);
     }
@@ -937,9 +1056,8 @@ function renderGoogleAccountsChooserFeed() {
 
   container.innerHTML = '';
 
-  // Mode 1: No saved accounts on this device, OR user chose "Use another account"
-  if (deviceAccounts.length === 0 || isEnteringAnotherGoogleAccount) {
-    const showBack = (deviceAccounts.length > 0 && isEnteringAnotherGoogleAccount);
+  // Mode: Entering another Gmail account
+  if (isEnteringAnotherGoogleAccount) {
     container.innerHTML = `
       <div class="p-6 sm:p-8 space-y-6">
         <div class="space-y-2">
@@ -953,7 +1071,7 @@ function renderGoogleAccountsChooserFeed() {
         </div>
         <div class="flex items-center justify-between text-xs text-[#5f6368] pt-1">
           <span>Not your computer? Use Guest mode to sign in privately.</span>
-          ${showBack ? '<button type="button" onclick="showSavedGoogleAccountsList()" class="text-[#1a73e8] hover:underline font-medium cursor-pointer">Back to accounts</button>' : ''}
+          <button type="button" onclick="showSavedGoogleAccountsList()" class="text-[#1a73e8] hover:underline font-medium cursor-pointer">Back to accounts</button>
         </div>
       </div>
     `;
@@ -964,7 +1082,7 @@ function renderGoogleAccountsChooserFeed() {
     return;
   }
 
-  // Mode 2: Saved accounts exist on this device -> show them
+  // Normal Mode: Show the accounts list
   deviceAccounts.forEach(acc => {
     const row = document.createElement('div');
     row.className = 'google-account-row flex items-center justify-between p-3.5 hover:bg-[#f8fafd] cursor-pointer transition select-none';
@@ -982,7 +1100,7 @@ function renderGoogleAccountsChooserFeed() {
           <div class="text-xs text-[#5f6368] font-mono leading-tight">${escapeHTML(acc.email)}</div>
         </div>
       </div>
-      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : ''}
+      ${acc.signedOut ? '<span class="text-xs text-[#5f6368] font-sans">Signed out</span>' : '<span class="text-xs text-[#1a73e8] font-medium font-sans">دخول فوري</span>'}
     `;
 
     container.appendChild(row);
@@ -1009,7 +1127,15 @@ function renderGoogleAccountsChooserFeed() {
 function selectGoogleAccount(email) {
   if (!email) return;
   const cleanEmail = email.trim().toLowerCase();
-  logInGoogleUserDirectly(cleanEmail, true);
+
+  // If already authorized previously, enter directly!
+  if (isGoogleAccountAuthorized(cleanEmail)) {
+    logInGoogleUserDirectly(cleanEmail, true);
+    return;
+  }
+
+  // First time: show Google OAuth Consent & Permissions dialog
+  openGoogleOAuthConsent(cleanEmail);
 }
 
 function toggleLanguageArabic() {
@@ -1129,6 +1255,7 @@ function logInGoogleUserDirectly(email, trusted = true, extraProfile = null) {
 
   if (trusted) {
     markDeviceAsTrusted(cleanEmail, true);
+    markGoogleAccountAuthorized(cleanEmail);
     setStorageJSON('batihub_saved_login_cred', {
       email: cleanEmail,
       autoLogin: true
@@ -3497,8 +3624,8 @@ function handleEditWorkerPostSubmit(event) {
 /* 12.7. REALTIME LIVE APP UPDATER (INSTANT UPDATE ACROSS ALL PHONES & APPS) */
 /* ========================================================================= */
 
-const CURRENT_APP_BUILD = 1732646400000;
-const CURRENT_APP_VERSION = '4.6.0';
+const CURRENT_APP_BUILD = 1732647000000;
+const CURRENT_APP_VERSION = '4.7.0';
 
 let isUpdatingApp = false;
 
@@ -5052,7 +5179,7 @@ function startLiveClock() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 0. Cache-Busting & Mobile Force Refresh Engine (Bypasses stale browser cache)
-  const CURRENT_APP_VERSION = '4.6.0';
+  const CURRENT_APP_VERSION = '4.7.0';
   const storedVersion = localStorage.getItem('batihub_app_version');
   if (storedVersion !== CURRENT_APP_VERSION) {
     localStorage.setItem('batihub_app_version', CURRENT_APP_VERSION);

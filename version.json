@@ -1,7 +1,7 @@
 {
-  "version": "4.6.0",
-  "build": 1732646400000,
+  "version": "4.7.0",
+  "build": 1732647000000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Removed duplicate inputs, clean single Google sign-in input, direct login with Google name & profile avatar without Gmail redirect",
-  "timestamp": "2026-11-26T19:28:00Z"
+  "releaseNotes": "Restored Google accounts list chooser, authentic Google OAuth consent & permissions modal on first sign-in, instant direct login on subsequent entries",
+  "timestamp": "2026-11-26T19:38:00Z"
 }

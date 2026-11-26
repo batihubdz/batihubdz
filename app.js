@@ -815,32 +815,130 @@ function renderTrustedAccountsPills() {
   list.forEach(email => {
     const clean = email.toLowerCase();
     const isAdmin = (clean === 'batihubdz@gmail.com');
-    const isTrusted = isDeviceTrustedForEmail(clean);
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.className = `px-3 py-1.5 rounded-xl border text-xs font-mono transition flex items-center gap-2 cursor-pointer active:scale-95 ${
-      isAdmin 
-        ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20' 
-        : 'bg-bh-card border-bh-border hover:border-bh-yellow/60 text-slate-200 hover:text-white'
-    }`;
+    const name = deriveNameFromGmail(clean);
+    const initial = name.charAt(0).toUpperCase();
 
-    pill.innerHTML = `
-      <span class="w-2 h-2 rounded-full ${isAdmin ? 'bg-amber-400' : (isTrusted ? 'bg-emerald-400' : 'bg-slate-400')}"></span>
-      <span dir="ltr">${escapeHTML(clean)}</span>
-      <span class="text-[10px] text-slate-400">${isAdmin ? '(إدارة)' : (isTrusted ? '(موثوق)' : '(مستخدم)')}</span>
+    const card = document.createElement('div');
+    card.className = 'p-3 rounded-2xl bg-bh-card hover:bg-slate-800 border border-bh-border hover:border-bh-yellow/70 cursor-pointer transition flex items-center justify-between group active:scale-98 shadow-sm';
+    card.onclick = () => selectGoogleAccount(clean);
+
+    card.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'} flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+          ${initial}
+        </div>
+        <div class="text-right">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white text-xs sm:text-sm group-hover:text-bh-yellow transition">${escapeHTML(name)}</span>
+            ${isAdmin ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">إدارة</span>' : '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 font-semibold">Google</span>'}
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono" dir="ltr">${escapeHTML(clean)}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] text-emerald-400 font-bold hidden sm:inline">دخول فوري</span>
+        <div class="w-7 h-7 rounded-full bg-slate-700/60 group-hover:bg-bh-yellow group-hover:text-slate-950 text-slate-300 flex items-center justify-center transition text-xs shrink-0">
+          <i class="fa-solid fa-arrow-left"></i>
+        </div>
+      </div>
     `;
 
-    pill.onclick = () => {
-      const input = document.getElementById('authGmailInput');
-      if (input) {
-        input.value = clean;
-        if (isTrusted) {
-          handleGoogleAuthSubmit();
-        }
-      }
-    };
+    container.appendChild(card);
+  });
+}
 
-    container.appendChild(pill);
+function openGoogleAccountChooserModal() {
+  renderGoogleAccountsChooserList();
+  const modal = document.getElementById('modalGoogleAccountChooser');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeGoogleAccountChooserModal() {
+  const modal = document.getElementById('modalGoogleAccountChooser');
+  if (modal) modal.classList.add('hidden');
+}
+
+function toggleUseAnotherGoogleAccount() {
+  const box = document.getElementById('useAnotherAccountBox');
+  if (box) {
+    box.classList.toggle('hidden');
+    if (!box.classList.contains('hidden')) {
+      const inp = document.getElementById('customAnotherGmailInput');
+      if (inp) {
+        inp.value = '';
+        inp.focus();
+      }
+    }
+  }
+}
+
+function submitCustomAnotherGmail() {
+  const inp = document.getElementById('customAnotherGmailInput');
+  const email = (inp ? inp.value : '').trim().toLowerCase();
+  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  if (!email || !email.includes('@') || !gmailRegex.test(email)) {
+    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح وموثق (ينتهي بـ @gmail.com)', 'warning');
+    return;
+  }
+  selectGoogleAccount(email);
+}
+
+function selectGoogleAccount(email) {
+  if (!email) return;
+  const cleanEmail = email.trim().toLowerCase();
+  closeGoogleAccountChooserModal();
+  logInGoogleUserDirectly(cleanEmail, true);
+}
+
+function renderGoogleAccountsChooserList() {
+  const container = document.getElementById('googleAccountsChooserList');
+  if (!container) return;
+
+  const trustedMap = getTrustedDevicesMap();
+  const accounts = initAccountsDatabase();
+
+  const emailsSet = new Set([
+    'mouhanedguellif16@gmail.com',
+    'batihubdz@gmail.com',
+    ...Object.keys(trustedMap),
+    ...Object.keys(accounts)
+  ]);
+
+  const list = Array.from(emailsSet).filter(e => e && e.includes('@'));
+  container.innerHTML = '';
+
+  list.forEach(email => {
+    const clean = email.toLowerCase();
+    const isAdmin = (clean === 'batihubdz@gmail.com');
+    const name = deriveNameFromGmail(clean);
+    const initial = name.charAt(0).toUpperCase();
+
+    const row = document.createElement('div');
+    row.className = 'p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-bh-yellow/70 cursor-pointer transition flex items-center justify-between group active:scale-98 shadow-sm';
+    row.onclick = () => selectGoogleAccount(clean);
+
+    row.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'} flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+          ${initial}
+        </div>
+        <div class="text-right">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white text-xs sm:text-sm group-hover:text-bh-yellow transition">${escapeHTML(name)}</span>
+            ${isAdmin ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">إدارة</span>' : '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold">متوفر</span>'}
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono" dir="ltr">${escapeHTML(clean)}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] text-emerald-400 font-bold">دخول</span>
+        <div class="w-7 h-7 rounded-full bg-slate-700/60 group-hover:bg-bh-yellow group-hover:text-slate-950 text-slate-300 flex items-center justify-center transition text-xs shrink-0">
+          <i class="fa-solid fa-arrow-left"></i>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
   });
 }
 
@@ -855,17 +953,11 @@ function switchAuthView(viewName) {
 
   [viewGoogle, viewOtp, viewRegister, viewForgot].forEach(el => el && el.classList.add('hidden'));
 
-  if (viewName === 'google' || viewName === 'login' || viewName === 'register') {
-    if (viewGoogle) viewGoogle.classList.remove('hidden');
-    if (headerTitle) headerTitle.textContent = 'BatiHub DZ • تسجيل الدخول بـ Google';
-    if (headerSub) headerSub.textContent = 'أدخل بريد Google (Gmail) لتسجيل الدخول المباشر أو تأكيد جهازك الجديد';
-    initMobileLoginPicker();
-    renderTrustedAccountsPills();
-  } else if (viewName === 'otp') {
-    if (viewOtp) viewOtp.classList.remove('hidden');
-    if (headerTitle) headerTitle.textContent = 'تأكيد جهاز جديد • رمز التحقق';
-    if (headerSub) headerSub.textContent = 'أدخل رمز التحقق المكون من 6 أرقام المرسل إلى بريدك لتأكيد هذا الجهاز';
-  }
+  if (viewGoogle) viewGoogle.classList.remove('hidden');
+  if (headerTitle) headerTitle.textContent = 'BatiHub DZ • تسجيل الدخول بـ Google';
+  if (headerSub) headerSub.textContent = 'تسجيل الدخول المباشر بحساب Google (Gmail) بدون أي رمز أو كلمة مرور';
+  initMobileLoginPicker();
+  renderTrustedAccountsPills();
 }
 
 let pendingGoogleOtp = null;
@@ -874,56 +966,17 @@ async function handleGoogleAuthSubmit(event) {
   if (event) event.preventDefault();
 
   const input = document.getElementById('authGmailInput');
-  const rememberCheck = document.getElementById('authTrustedDeviceCheck');
   if (!input) return;
 
   const email = (input.value || '').trim().toLowerCase();
   const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
   if (!email || !email.includes('@') || !gmailRegex.test(email)) {
-    showToast('البريد الإلكتروني غير صحيح أو غير متواجد، يرجى كتابة عنوان بريد Google (Gmail) صحيح وموثق', 'warning');
+    showToast('يرجى إدخال عنوان بريد Google (Gmail) صحيح وموثق (ينتهي بـ @gmail.com)', 'warning');
     return;
   }
 
-  const shouldTrust = rememberCheck ? rememberCheck.checked : true;
-  const isTrusted = isDeviceTrustedForEmail(email);
-
-  if (isTrusted) {
-    // Trusted device: Instant direct login!
-    logInGoogleUserDirectly(email, true);
-    return;
-  }
-
-  // Untrusted / New device: Generate 6-digit security code and send via Gmail
-  const otpCode = String(Math.floor(100000 + Math.random() * 900000));
-  pendingGoogleOtp = {
-    email: email,
-    code: otpCode,
-    shouldTrust: shouldTrust,
-    timestamp: Date.now()
-  };
-
-  const targetEmailDisplay = document.getElementById('otpTargetEmailDisplay');
-  if (targetEmailDisplay) targetEmailDisplay.textContent = email;
-
-  const otpInput = document.getElementById('otpCodeInput');
-  if (otpInput) {
-    otpInput.value = '';
-    setTimeout(() => otpInput.focus(), 300);
-  }
-
-  switchAuthView('otp');
-  showToast('جاري إرسال رمز أمان Google إلى بريدك الإلكتروني...', 'info', 3000);
-
-  // Send real email via SMTP
-  sendOtpEmail(email, otpCode, 'login').then(res => {
-    if (res && res.success && !res.fallback) {
-      showToast(`تم إرسال رمز الأمان المكون من 6 أرقام إلى ${email} بنجاح!`, 'success', 5000);
-    } else {
-      showToast(`رمز التحقق المرسل إلى ${email} هو: ${otpCode}`, 'info', 7000);
-    }
-  }).catch(() => {
-    showToast(`رمز التحقق المرسل إلى ${email} هو: ${otpCode}`, 'info', 7000);
-  });
+  // Direct login with zero OTP!
+  logInGoogleUserDirectly(email, true);
 }
 
 async function handleVerifyGoogleOtp(event) {
@@ -1027,18 +1080,14 @@ async function handleMobileGoogleLogin() {
         mediation: 'optional'
       });
       if (cred && cred.id && cred.id.includes('@')) {
-        if (input) input.value = cred.id;
-        handleGoogleAuthSubmit();
+        selectGoogleAccount(cred.id);
         return;
       }
     } catch (e) {}
   }
 
-  const userGmail = prompt('أدخل بريد Google (Gmail) المسجل في هاتفك:');
-  if (userGmail && userGmail.trim()) {
-    if (input) input.value = userGmail.trim();
-    handleGoogleAuthSubmit();
-  }
+  // Open the Google Account Chooser modal directly on mobile and PC
+  openGoogleAccountChooserModal();
 }
 
 // Backwards-compatible aliases
@@ -1092,6 +1141,38 @@ async function sendOtpEmail(toEmail, otpCode, purpose = 'registration') {
     } catch (err) {
       console.error('SMTP Mail send error:', err);
       return { success: false, error: err.message };
+    }
+  }
+
+  // Web Browser Mode: Call Node.js backend endpoint (/api/send-otp) with fallback to Render live service
+  const endpoints = [
+    '/api/send-otp',
+    'https://batihub-dz.onrender.com/api/send-otp'
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toEmail,
+          code: otpCode,
+          subject: subject,
+          text: `رمز التحقق الخاص بك في BatiHub DZ هو: ${otpCode}`,
+          html: html
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.success) {
+          console.log(`[OTP SENT] Delivered to ${toEmail} via ${endpoint}, MessageId: ${data.messageId}`);
+          return { success: true, via: endpoint, messageId: data.messageId };
+        }
+      }
+    } catch (netErr) {
+      console.warn(`[OTP] Failed endpoint ${endpoint}:`, netErr.message);
     }
   }
 
@@ -1469,7 +1550,23 @@ function applyLanguage(lang) {
     }
   });
 
-  // Update language switcher button states
+  // Update top header language switcher buttons
+  const topBtns = {
+    ar: document.getElementById('topLangAr'),
+    fr: document.getElementById('topLangFr'),
+    en: document.getElementById('topLangEn')
+  };
+  Object.keys(topBtns).forEach(k => {
+    const b = topBtns[k];
+    if (!b) return;
+    if (k === lang) {
+      b.className = 'px-2.5 py-1 rounded-lg font-bold transition text-slate-950 bg-bh-yellow shadow-sm';
+    } else {
+      b.className = 'px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition';
+    }
+  });
+
+  // Update profile modal language switcher buttons
   ['pLangAR', 'pLangFR', 'pLangEN'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -1486,6 +1583,21 @@ function applyLanguage(lang) {
 
   renderWorkerPostsFeed();
   renderStudyOfficesFeed();
+}
+
+/**
+ * Smooth horizontal category navigation scroll
+ */
+function scrollNavPills(direction) {
+  const container = document.getElementById('mainNavScrollContainer');
+  if (!container) return;
+  const isRTL = document.documentElement.dir === 'rtl';
+  const delta = 220;
+  if (direction === 'left') {
+    container.scrollBy({ left: isRTL ? delta : -delta, behavior: 'smooth' });
+  } else {
+    container.scrollBy({ left: isRTL ? -delta : delta, behavior: 'smooth' });
+  }
 }
 
 /* ========================================================================= */

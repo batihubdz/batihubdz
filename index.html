@@ -107,75 +107,65 @@
       <!-- Brand Logo -->
       <div class="flex flex-col items-center">
         <img src="assets/batihub_logo.png" alt="BatiHub DZ" class="w-28 sm:w-32 h-auto object-contain mb-2 drop-shadow-lg">
-        <h2 class="text-xl font-heading font-black text-white" id="authScreenHeaderTitle">BatiHub DZ • تسجيل الدخول</h2>
+        <h2 class="text-xl font-heading font-black text-white" id="authScreenHeaderTitle">BatiHub DZ • تسجيل الدخول بـ Google</h2>
         <p class="text-xs text-slate-400 mt-1" id="authScreenHeaderSub">منصة المحترفين وأصحاب المشاريع وعروض العمل في الجزائر</p>
       </div>
 
-      <!-- VIEW 1: GOOGLE / GMAIL AUTH -->
+      <!-- MAIN GOOGLE AUTH INTERFACE (دخول مباشر بـ Google بدون رمز تحقق) -->
       <div id="viewGoogleAuth" class="space-y-4 text-right">
-        <form onsubmit="handleGoogleAuthSubmit(event)" class="space-y-4">
+        
+        <!-- Big Official Google Sign-In Button -->
+        <div>
+          <button type="button" onclick="openGoogleAccountChooserModal()" class="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-2xl text-xs sm:text-sm shadow-xl transition flex items-center justify-center gap-3 border border-slate-200 cursor-pointer active:scale-98">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span class="font-sans font-bold text-slate-900 text-xs sm:text-sm">تسجيل الدخول باستخدام Google مباشرة</span>
+          </button>
+          <p class="text-[10px] text-slate-400 mt-1.5 text-center">انقر لاختيار حساب Google الخاص بك والدخول فوراً بدون أي رمز</p>
+        </div>
+
+        <!-- Available Google Accounts on this Device -->
+        <div id="trustedAccountsSection" class="p-3.5 rounded-2xl bg-bh-bg/90 border border-bh-border space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-brands fa-google text-bh-yellow"></i>
+              <span>حسابات Google على هذا الجهاز :</span>
+            </span>
+            <span class="text-[10px] text-emerald-400 font-mono">دخول فوري بنقرة واحدة</span>
+          </div>
+          <div id="trustedAccountsPillsList" class="flex flex-col gap-2">
+            <!-- Dynamically populated Google Accounts cards -->
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-2">
+          <div class="flex-1 h-px bg-bh-border"></div>
+          <span class="text-[11px] text-slate-500 font-semibold">أو كتابة بريد Gmail مباشرة</span>
+          <div class="flex-1 h-px bg-bh-border"></div>
+        </div>
+
+        <!-- Direct Email Input Form -->
+        <form onsubmit="handleGoogleAuthSubmit(event)" class="space-y-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5">عنوان بريد Google (Gmail) الخاص بك :</label>
             <div class="relative">
               <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-bh-yellow">
                 <i class="fa-brands fa-google text-base"></i>
               </span>
-              <input type="email" id="authGmailInput" required placeholder="mouhanedguellif16@gmail.com" class="w-full bg-bh-bg border border-bh-border rounded-xl pr-10 pl-3 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-bh-yellow font-mono text-left" dir="ltr">
+              <input type="email" id="authGmailInput" required placeholder="mouhanedguellif16@gmail.com" class="w-full bg-bh-bg border border-bh-border rounded-xl pr-10 pl-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-bh-yellow font-mono text-left" dir="ltr">
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">يُشترط استخدام بريد Gmail لتأكيد الهوية ومزامنة بياناتك بأمان عبر الأجهزة.</p>
           </div>
 
-          <div class="flex items-center justify-between text-xs text-slate-300 py-1">
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" id="authTrustedDeviceCheck" checked class="w-4 h-4 rounded border-bh-border text-bh-yellow focus:ring-0 bg-bh-bg cursor-pointer">
-              <span class="font-semibold text-slate-300 hover:text-white transition">توثيق هذا الجهاز (الدخول المباشر دائماً دون طلب رمز مجدداً)</span>
-            </label>
-          </div>
-
-          <button type="submit" id="btnGoogleAuthSubmit" class="w-full py-3 bg-gradient-to-r from-bh-yellow to-bh-orange hover:opacity-95 text-slate-950 font-black rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-98">
-            <i class="fa-brands fa-google text-sm"></i>
-            <span>المتابعة باستخدام حساب Google (Gmail)</span>
-          </button>
-
-          <!-- Mobile Direct Google Account Picker button -->
-          <div id="mobileGooglePickerContainer" class="hidden pt-1">
-            <button type="button" onclick="handleMobileGoogleLogin()" class="w-full py-2.5 bg-bh-bg hover:bg-slate-800 border border-bh-yellow/40 text-slate-200 hover:text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer active:scale-98">
-              <i class="fa-solid fa-mobile-screen-button text-bh-yellow"></i>
-              <span>تسجيل الدخول التلقائي بحساب الهاتف</span>
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- VIEW 2: OTP SECURITY CODE VERIFICATION -->
-      <div id="viewOtp" class="hidden space-y-4 text-center">
-        <div class="w-16 h-16 mx-auto rounded-3xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center text-3xl shadow-xl">
-          <i class="fa-solid fa-shield-halved animate-pulse"></i>
-        </div>
-        <div class="space-y-1">
-          <h3 class="font-heading font-black text-white text-base">تأكيد جهاز جديد • رمز التحقق</h3>
-          <p class="text-xs text-slate-300">أدخل رمز التحقق المكون من 6 أرقام المرسل إلى بريدك :</p>
-          <p id="otpTargetEmailDisplay" class="font-mono font-bold text-xs text-bh-yellow" dir="ltr">user@gmail.com</p>
-        </div>
-
-        <form onsubmit="handleVerifyGoogleOtp(event)" class="space-y-4">
-          <div>
-            <input type="text" id="otpCodeInput" maxlength="6" required placeholder="------" class="w-52 mx-auto text-center bg-bh-bg border-2 border-bh-border focus:border-bh-yellow rounded-2xl py-3.5 text-2xl font-mono font-black text-bh-yellow tracking-widest focus:outline-none shadow-inner" dir="ltr" autocomplete="one-time-code">
-            <p class="text-[11px] text-slate-400 mt-2">تفقّد صندوق الوارد أو البريد الترويجي (Spam) للوصول إلى الرمز.</p>
-          </div>
-
-          <button type="submit" id="btnOtpSubmit" class="w-full py-3 bg-gradient-to-r from-bh-yellow to-bh-orange hover:opacity-95 text-slate-950 font-black rounded-xl text-xs shadow-lg transition cursor-pointer active:scale-98 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>تأكيد الرمز وتوثيق هذا الجهاز</span>
+          <button type="submit" id="btnGoogleAuthSubmit" class="w-full py-2.5 bg-gradient-to-r from-bh-yellow to-bh-orange hover:opacity-95 text-slate-950 font-black rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98">
+            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+            <span>دخول مباشر بالبريد المحدد</span>
           </button>
         </form>
 
-        <div class="pt-2">
-          <button type="button" onclick="cancelOtpAndGoBack()" class="text-xs text-slate-400 hover:text-white transition cursor-pointer flex items-center justify-center gap-1 mx-auto">
-            <i class="fa-solid fa-arrow-right"></i>
-            <span>العودة وتغيير عنوان البريد الإلكتروني</span>
-          </button>
-        </div>
       </div>
 
     </div>
@@ -208,6 +198,13 @@
 
             <div class="h-4 w-px bg-bh-border hidden sm:block"></div>
             
+            <!-- 3-Language Switcher (العربية | Français | English) -->
+            <div class="flex items-center bg-bh-card border border-bh-border rounded-xl p-0.5 text-xs shadow-sm">
+              <button type="button" onclick="setLanguage('ar')" id="topLangAr" class="px-2.5 py-1 rounded-lg font-bold transition text-slate-950 bg-bh-yellow">العربية</button>
+              <button type="button" onclick="setLanguage('fr')" id="topLangFr" class="px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition">Français</button>
+              <button type="button" onclick="setLanguage('en')" id="topLangEn" class="px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition">English</button>
+            </div>
+
             <!-- User Profile Pill -->
             <div id="userProfilePill" onclick="openUserProfileModal()" class="flex items-center gap-2 bg-bh-card hover:bg-slate-800/80 cursor-pointer border border-bh-border hover:border-bh-yellow/50 transition px-2.5 py-1 rounded-xl" title="الملف الشخصي والإعدادات">
               <div class="relative">
@@ -235,60 +232,66 @@
             </div>
           </div>
 
-          <!-- Desktop Navigation Tabs -->
-          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs py-1">
-            <button class="nav-tab active-tab" data-tab="tab-scientific-calculator" onclick="switchTab('tab-scientific-calculator')">
-              <i class="fa-solid fa-calculator text-bh-yellow"></i>
-              <span>حاسبة البناء</span>
+          <!-- Desktop Navigation Tabs with Smooth Scroll Arrows -->
+          <div class="flex-1 min-w-0 relative flex items-center">
+            <!-- Scroll Left Arrow -->
+            <button type="button" onclick="scrollNavPills('left')" class="z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-bh-card/90 hover:bg-bh-yellow hover:text-slate-950 text-slate-300 border border-bh-border shadow-md flex items-center justify-center transition shrink-0 cursor-pointer mr-1" title="السابق">
+              <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
-            <button class="nav-tab border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-bold" data-tab="tab-real-estate" onclick="switchTab('tab-real-estate')">
-              <i class="fa-solid fa-house-chimney text-emerald-400"></i>
-              <span>عقارات وبيع منازل</span>
-            </button>
-            <button class="nav-tab border-amber-500/40 bg-amber-500/10 text-amber-300 font-bold" data-tab="tab-cost-estimator" onclick="switchTab('tab-cost-estimator')">
-              <i class="fa-solid fa-file-invoice-dollar text-bh-yellow"></i>
-              <span>حساب التكاليف و Devis</span>
-            </button>
-            <button class="nav-tab border-cyan-500/40 bg-cyan-500/10 text-cyan-300 font-bold" data-tab="tab-ai-chat" onclick="switchTab('tab-ai-chat')">
-              <i class="fa-solid fa-robot text-cyan-400"></i>
-              <span>الذكاء الاصطناعي BatiHub AI</span>
-            </button>
-            <button class="nav-tab" data-tab="tab-worker-board" onclick="switchTab('tab-worker-board')">
-              <i class="fa-solid fa-briefcase text-bh-orange"></i>
-              <span>عروض العمل</span>
-            </button>
-            <button class="nav-tab" data-tab="tab-worker-requests" onclick="switchTab('tab-worker-requests')">
-              <i class="fa-solid fa-person-digging text-emerald-400"></i>
-              <span>طلبات العمل</span>
-            </button>
-            <button class="nav-tab" data-tab="tab-gallery" onclick="switchTab('tab-gallery')">
-              <i class="fa-solid fa-palette text-amber-400"></i>
-              <span>معرض التصاميم</span>
-            </button>
-            <button class="nav-tab" data-tab="tab-building-materials" onclick="switchTab('tab-building-materials')">
-              <i class="fa-solid fa-cubes-stacked text-amber-500"></i>
-              <span>مواد البناء</span>
-            </button>
-            <button class="nav-tab" id="navTabPendingPosts" data-tab="tab-pending-posts" onclick="switchTab('tab-pending-posts')">
-              <i id="navTabPendingIcon" class="fa-solid fa-hourglass-half text-amber-400"></i>
-              <span id="navTabPendingText">منشورات معلقة</span>
-              <span id="navTabPendingBadge" class="hidden px-1.5 py-0.5 rounded-full text-[9px] bg-amber-500 text-slate-950 font-black">0</span>
-            </button>
-            <button class="nav-tab" data-tab="tab-study-offices" onclick="switchTab('tab-study-offices')">
-              <i class="fa-solid fa-compass-drafting text-sky-400"></i>
-              <span>مكاتب دراسات</span>
-            </button>
-          <!-- Download App Pill Button -->
-          <button type="button" onclick="openDownloadAppModal()" class="flex px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition items-center gap-1.5 cursor-pointer shadow-sm shrink-0">
-            <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i>
-            <span>تحميل التطبيق</span>
-          </button>
-          <button type="button" onclick="openMessagesHubModal()" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-bh-cardhover text-slate-300 hover:text-white border border-bh-border hover:border-amber-400/40 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
-              <i class="fa-solid fa-comments text-amber-400"></i>
-              <span data-i18n="nav_messages">المحادثات الخاصة</span>
-              <span id="unreadMessagesBadge" class="hidden px-1.5 py-0.5 rounded-full text-[9px] bg-rose-500 text-white font-bold">0</span>
+
+            <!-- Scrollable Tabs List -->
+            <div id="mainNavScrollContainer" class="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth text-xs py-1 px-1">
+              <button class="nav-tab active-tab shrink-0" data-tab="tab-scientific-calculator" onclick="switchTab('tab-scientific-calculator')">
+                <i class="fa-solid fa-calculator text-bh-yellow"></i>
+                <span data-i18n="nav_scientific_calc">حاسبة البناء</span>
+              </button>
+              <button class="nav-tab border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-bold shrink-0" data-tab="tab-real-estate" onclick="switchTab('tab-real-estate')">
+                <i class="fa-solid fa-house-chimney text-emerald-400"></i>
+                <span data-i18n="nav_real_estate">عقارات وبيع منازل</span>
+              </button>
+              <button class="nav-tab border-amber-500/40 bg-amber-500/10 text-amber-300 font-bold shrink-0" data-tab="tab-cost-estimator" onclick="switchTab('tab-cost-estimator')">
+                <i class="fa-solid fa-file-invoice-dollar text-bh-yellow"></i>
+                <span data-i18n="nav_cost_estimator">حساب التكاليف و Devis</span>
+              </button>
+              <button class="nav-tab shrink-0" data-tab="tab-worker-board" onclick="switchTab('tab-worker-board')">
+                <i class="fa-solid fa-briefcase text-bh-orange"></i>
+                <span data-i18n="nav_worker_board">عروض العمل</span>
+              </button>
+              <button class="nav-tab shrink-0" data-tab="tab-worker-requests" onclick="switchTab('tab-worker-requests')">
+                <i class="fa-solid fa-person-digging text-emerald-400"></i>
+                <span data-i18n="nav_worker_requests">طلبات العمل</span>
+              </button>
+              <button class="nav-tab shrink-0" data-tab="tab-gallery" onclick="switchTab('tab-gallery')">
+                <i class="fa-solid fa-palette text-amber-400"></i>
+                <span data-i18n="nav_gallery">معرض التصاميم</span>
+              </button>
+              <button class="nav-tab shrink-0" data-tab="tab-building-materials" onclick="switchTab('tab-building-materials')">
+                <i class="fa-solid fa-cubes-stacked text-amber-500"></i>
+                <span data-i18n="nav_building_materials">مواد البناء</span>
+              </button>
+              <button class="nav-tab shrink-0" id="navTabPendingPosts" data-tab="tab-pending-posts" onclick="switchTab('tab-pending-posts')">
+                <i id="navTabPendingIcon" class="fa-solid fa-hourglass-half text-amber-400"></i>
+                <span id="navTabPendingText" data-i18n="nav_pending_posts">منشورات معلقة</span>
+                <span id="navTabPendingBadge" class="hidden px-1.5 py-0.5 rounded-full text-[9px] bg-amber-500 text-slate-950 font-black">0</span>
+              </button>
+              <button class="nav-tab shrink-0" data-tab="tab-study-offices" onclick="switchTab('tab-study-offices')">
+                <i class="fa-solid fa-compass-drafting text-sky-400"></i>
+                <span data-i18n="nav_study_offices">مكاتب دراسات</span>
+              </button>
+            </div>
+
+            <!-- Scroll Right Arrow -->
+            <button type="button" onclick="scrollNavPills('right')" class="z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-bh-card/90 hover:bg-bh-yellow hover:text-slate-950 text-slate-300 border border-bh-border shadow-md flex items-center justify-center transition shrink-0 cursor-pointer ml-1" title="التالي">
+              <i class="fa-solid fa-chevron-left text-xs"></i>
             </button>
           </div>
+
+          <!-- Messages Hub Button -->
+          <button type="button" onclick="openMessagesHubModal()" class="px-3.5 py-2 rounded-xl bg-bh-card hover:bg-bh-cardhover text-slate-300 hover:text-white border border-bh-border hover:border-amber-400/40 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shrink-0">
+            <i class="fa-solid fa-comments text-amber-400"></i>
+            <span data-i18n="nav_messages">المحادثات الخاصة</span>
+            <span id="unreadMessagesBadge" class="hidden px-1.5 py-0.5 rounded-full text-[9px] bg-rose-500 text-white font-bold">0</span>
+          </button>
 
         </div>
 
@@ -724,140 +727,7 @@
 
       </div>
 
-      <!-- ========================================================================= -->
-      <!-- TAB: AI ARCHITECTURAL ASSISTANT & COST ESTIMATOR (مساعد المهندس الذكي)     -->
-      <!-- ========================================================================= -->
-            <!-- ========================================================================= -->
-      <!-- TAB: GENERAL AI CHATBOT (الذكاء الاصطناعي BatiHub AI - مثل ChatGPT / Gemini) -->
-      <!-- ========================================================================= -->
-      <div id="tab-ai-chat" class="tab-content hidden space-y-6 text-right">
 
-        <!-- Top Header Card -->
-        <div class="bg-gradient-to-r from-bh-card via-slate-900 to-bh-card border border-cyan-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-          <div class="flex items-center justify-between flex-wrap gap-4">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-2xl shadow-lg shrink-0">
-                <i class="fa-solid fa-robot animate-pulse"></i>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h2 class="font-heading font-black text-lg sm:text-xl text-white">الذكاء الاصطناعي BatiHub AI • محادثة واستشارات شاملة</h2>
-                  <span class="text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-full font-mono flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> ذكاء اصطناعي عام (ChatGPT / Gemini AI)
-                  </span>
-                </div>
-                <p class="text-xs text-slate-300 mt-1">تحدث بحرية في كافة المجالات بدون قيود: ثقافة، برمجة، علوم، نصائح يومية، استشارات معمارية، وتوليد صور ثلاثية الأبعاد.</p>
-              </div>
-            </div>
-
-            <!-- Action Buttons: Gemini Status & Clear -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <div class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-cyan-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-2 shadow-sm select-none">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <i class="fa-solid fa-brain text-xs text-amber-400"></i>
-                <span id="geminiKeyStatusBtnText">Google Gemini AI: مدمج ومفعل دائماً ⚡</span>
-              </div>
-              <button type="button" onclick="clearAiChatHistory()" class="px-3 py-2 rounded-xl bg-bh-bg hover:bg-rose-500/20 border border-bh-border hover:border-rose-500/40 text-slate-400 hover:text-rose-300 text-xs transition cursor-pointer" title="مسح المحادثة وبدء جلسة جديدة">
-                <i class="fa-solid fa-trash-can ml-1"></i>
-                <span>مسح المحادثة</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Container -->
-        <div id="aiChatSubModeContainer" class="space-y-4">
-          
-          <!-- Suggested Quick Prompts -->
-          <div class="pills-scroll-container text-xs">
-            <span class="text-[11px] text-slate-400 font-semibold shrink-0">أسئلة مقترحة:</span>
-            <button type="button" onclick="sendAiQuickPrompt('سلام عليكم، واش راك؟ انصحني كيفاش نقدر نطور مهاراتي وننجح في حياتي ومشاريعي؟')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              نصيحة لتطوير المهارات والنجاح
-            </button>
-            <button type="button" onclick="sendAiQuickPrompt('اكتب لي كود برمجي بلغة Python لشرح كيفية استخدام الذكاء الاصطناعي وتحليل البيانات')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              شرح كود برمجة Python
-            </button>
-            <button type="button" onclick="sendAiQuickPrompt('احسبلي بالتقريب كمية الإسمنت والحديد اللازمة لصب سقف 100م² سمك 16سم مع مدة التصلب؟')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              كمية إسمنت وحديد سقف 100م²
-            </button>
-            <button type="button" onclick="sendAiQuickPrompt('ولدلي صورة لتصميم واجهة فيلا عصرية في الجزائر بحجر القرميد والزجاج والإنارة المخفية')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              توليد صورة واجهة فيلا عصرية
-            </button>
-            <button type="button" onclick="sendAiQuickPrompt('احكيلي نكتة جزائرية طريفة ترفه على القلب')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              طرفة ونكتة خفيفة
-            </button>
-            <button type="button" onclick="sendAiQuickPrompt('شكون خدمك وبرمجك؟')" class="px-3 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-bh-border text-xs whitespace-nowrap transition cursor-pointer flex-shrink-0">
-              من قام ببرمجتك وتطويرك؟
-            </button>
-          </div>
-
-          <!-- Chat Window Box -->
-          <div class="bg-bh-card border border-bh-border rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[580px] sm:h-[640px]">
-            
-            <!-- Message List -->
-            <div id="aiChatMessagesContainer" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
-              <!-- Initial Welcome Bubble -->
-              <div class="flex items-start gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 text-slate-950 flex items-center justify-center font-bold text-sm shrink-0 shadow-md">
-                  <i class="fa-solid fa-robot"></i>
-                </div>
-                <div class="ai-bubble-bot p-4 rounded-2xl max-w-2xl space-y-2 border border-cyan-500/20">
-                  <div class="flex items-center justify-between gap-2 border-b border-bh-border/60 pb-1.5">
-                    <span class="font-bold text-cyan-300 text-xs">BatiHub AI • المساعد الذكي العام</span>
-                    <span class="text-[10px] text-slate-400 font-mono">الآن</span>
-                  </div>
-                  <p class="text-slate-200 leading-relaxed">
-                    مرحباً بك! أنا مساعد الذكاء الاصطناعي الذكي والشامل. تم تطويري وبرمجتي بواسطة المهندس والمطور الجزائري: <strong>مهند قليف (Mouhaned Guellif)</strong>.
-                  </p>
-                  <p class="text-slate-300 leading-relaxed">
-                    أنا جاهز للإجابة عن أسئلتك في <strong>كافة المجالات بدون استثناء</strong> (ثقافة عامة، علوم، برمجة، إدارة أعمال، طرائف، نصائح)، بالإضافة إلى تخصصي الفائق في الهندسة المدنية والعمارة الجزائرية وتوليد الصور ثلاثية الأبعاد. تفضل بطرح أي سؤال وسأجيبك فوراً!
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Image Upload Preview Bar -->
-            <div id="aiAttachmentPreviewBar" class="hidden p-3 bg-bh-bg border-t border-bh-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <img id="aiAttachmentThumb" src="" alt="Attachment" class="w-12 h-12 object-cover rounded-xl border border-cyan-500/40">
-                <div>
-                  <span class="text-xs font-bold text-white block">صورة مرفقة للتحليل البصري</span>
-                  <span class="text-[10px] text-slate-400">سيقوم الذكاء الاصطناعي بفحصها</span>
-                </div>
-              </div>
-              <button type="button" onclick="removeAiAttachment()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-rose-500 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
-                <i class="fa-solid fa-xmark text-xs"></i>
-              </button>
-            </div>
-
-            <!-- Chat Input Toolbar -->
-            <form id="aiChatForm" onsubmit="handleAiChatSubmit(event)" class="p-3 sm:p-4 bg-bh-bg/95 border-t border-bh-border flex items-center gap-2">
-              
-              <!-- Attach Image Button -->
-              <label for="aiFileInput" class="w-10 h-10 rounded-xl bg-bh-card hover:bg-slate-800 border border-bh-border hover:border-cyan-400 text-slate-400 hover:text-cyan-300 flex items-center justify-center transition cursor-pointer shrink-0" title="إرفاق صورة أو مخطط للتحليل">
-                <i class="fa-solid fa-image text-sm"></i>
-              </label>
-              <input type="file" id="aiFileInput" accept="image/*" onchange="handleAiFileSelect(event)" class="hidden">
-
-              <!-- Prompt Input Field -->
-              <input type="text" id="aiChatInput" autocomplete="off" placeholder="اكتب سؤالك في أي مجال، استفسار، كود برمجي، أو اطلب توليد صورة..." class="flex-1 bg-bh-card border border-bh-border rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition">
-
-              <!-- Image Generation Toggle Button -->
-              <button type="button" id="btnAiImageGenToggle" onclick="toggleAiImageGenMode()" class="w-10 h-10 rounded-xl bg-bh-card hover:bg-slate-800 border border-bh-border text-slate-400 hover:text-amber-400 flex items-center justify-center transition cursor-pointer shrink-0" title="تفعيل وضع توليد الصور ثلاثية الأبعاد">
-                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-              </button>
-
-              <!-- Send Button -->
-              <button type="submit" id="btnAiSend" class="px-4 sm:px-5 h-10 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-slate-950 font-black text-xs sm:text-sm transition flex items-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer shrink-0 active:scale-95">
-                <i class="fa-solid fa-paper-plane text-xs"></i>
-                <span class="hidden sm:inline">إرسال</span>
-              </button>
-            </form>
-
-          </div>
-        </div>
-
-      </div>
 
       <!-- ========================================================================= -->
       <!-- TAB: BUILDING COST ESTIMATOR & DEVIS PDF (حساب تكاليف البناء والكشف التقديري) -->
@@ -901,9 +771,9 @@
               <div>
                 <h3 class="font-heading font-black text-white text-base flex items-center gap-2">
                   <i class="fa-solid fa-calculator text-bh-yellow"></i>
-                  <span>كاشف وحاسبة تكاليف البناء التقديرية (Devis Estimatif)</span>
+                  <span>كاشف وحاسبة تكاليف البناء والكشف التقديري (Devis Estimatif)</span>
                 </h3>
-                <p class="text-xs text-slate-400 mt-1">حدد مواصفات ورشتك وسيقوم الذكاء الاصطناعي بحساب تفاصيل المواد، اليد العاملة، والشاحنات مع إمكانية استخراج كشف رسمي بصيغة PDF.</p>
+                <p class="text-xs text-slate-400 mt-1">حدد مواصفات ورشتك وسيقوم النظام بحساب تفاصيل المواد، اليد العاملة للحرفيين، وتكاليف الديكور والشاحنات بدقة مع استخراج كشف رسمي بصيغة PDF.</p>
               </div>
               <span class="px-3 py-1 rounded-xl bg-bh-yellow/15 border border-bh-yellow/40 text-bh-yellow font-bold text-xs font-mono">بالدينار الجزائري (DZD)</span>
             </div>
@@ -964,24 +834,57 @@
                 </div>
               </div>
 
-              <!-- Decor Style Selection from Platform Gallery -->
-              <div class="p-4 rounded-2xl bg-bh-bg/80 border border-indigo-500/30 space-y-2">
-                <div class="flex items-center justify-between">
-                  <label class="block text-xs font-semibold text-indigo-300">اختيار تصميم أو ديكور من معرض التصاميم بالمنصة (اختياري) :</label>
-                  <span class="text-[10px] text-indigo-400 font-mono">ربط مباشر مع المعرض</span>
+              <!-- Decor Style Selection from Platform Gallery with Room Area Live Calculator -->
+              <div class="p-4 rounded-2xl bg-bh-bg/90 border border-indigo-500/40 space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <label class="block text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-palette text-indigo-400"></i>
+                    <span>حساب تكلفة الديكور للشومبرة / الغرفة حسب الصورة والمنشور :</span>
+                  </label>
+                  <span class="text-[10px] text-indigo-400 font-mono bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-500/20">ربط مباشر مع المعرض وحساب فوري</span>
                 </div>
-                <select id="estSelectedDecorPost" onchange="handleSelectDecorPostForEstimator(this.value)" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-400">
-                  <option value="none">تلقائي: بدون تحديد تصميم مسبق (حساب قياسي حر)</option>
-                </select>
-                <div id="estSelectedDecorPreview" class="hidden p-2.5 rounded-xl bg-bh-card border border-indigo-500/30 flex items-center justify-between gap-3">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <!-- 1. Select Decor Post -->
+                  <div class="sm:col-span-1">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">اختر المنشور والتصميم من المعرض :</label>
+                    <select id="estSelectedDecorPost" onchange="handleSelectDecorPostForEstimator(this.value)" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-400">
+                      <option value="none">تلقائي: بدون تحديد تصميم مسبق (حساب قياسي حر)</option>
+                    </select>
+                  </div>
+
+                  <!-- 2. Room / Chambre Area -->
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">مساحة الغرفة / الشومبرة (م²) :</label>
+                    <input type="number" id="estDecorRoomArea" min="1" max="500" value="16" oninput="updateDecorLiveCalculation()" placeholder="مثلاً: 16" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-400">
+                  </div>
+
+                  <!-- 3. Decor Rate per m2 -->
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">سعر ديكور المتر المربع (دج / م²) :</label>
+                    <input type="number" id="estDecorUnitRate" min="100" max="100000" step="50" value="3500" oninput="updateDecorLiveCalculation()" placeholder="مثلاً: 3500" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-400">
+                  </div>
+                </div>
+
+                <!-- Live Decor Preview & Calculation Card -->
+                <div id="estSelectedDecorPreview" class="p-3 rounded-2xl bg-bh-card border border-indigo-500/40 flex items-center justify-between flex-wrap gap-3">
                   <div class="flex items-center gap-3">
-                    <img id="estDecorThumb" src="" alt="Decor" class="w-12 h-12 object-cover rounded-lg border border-bh-border shrink-0">
-                    <div class="text-xs space-y-0.5">
-                      <span id="estDecorTitle" class="font-bold text-white block"></span>
-                      <span id="estDecorSpecs" class="text-[11px] text-slate-400"></span>
+                    <img id="estDecorThumb" src="assets/batihub_banner.jpg" alt="Decor" class="w-14 h-14 object-cover rounded-xl border border-indigo-500/30 shadow-md shrink-0">
+                    <div class="text-xs space-y-1">
+                      <div class="flex items-center gap-2">
+                        <span id="estDecorTitle" class="font-bold text-white text-xs sm:text-sm">ديكور غرفة نوم عصرية</span>
+                        <span id="estDecorTypeBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold">غرفة نوم</span>
+                      </div>
+                      <p id="estDecorSpecs" class="text-[11px] text-slate-300 line-clamp-1">خشب MDF مقاوم للرطوبة، إضاءة ليد مخفية، وجبس بورد ديكوري عصري</p>
+                      <div id="estDecorCalcResult" class="text-xs font-mono font-bold text-amber-400">
+                        حساب التكلفة: 16 م² × 3,500 دج = <span class="text-sm font-black text-bh-yellow">56,000 دج</span>
+                      </div>
                     </div>
                   </div>
-                  <button type="button" onclick="clearSelectedDecorInEstimator()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition">إلغاء التحديد</button>
+                  <button type="button" onclick="clearSelectedDecorInEstimator()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition border border-bh-border cursor-pointer">
+                    <i class="fa-solid fa-xmark text-xs ml-1"></i>
+                    <span>إلغاء التحديد</span>
+                  </button>
                 </div>
               </div>
 
@@ -1040,17 +943,65 @@
                   <span class="text-[10px] text-emerald-400 font-mono">ربط مباشر مع الحرفيين المسجلين</span>
                 </div>
 
-                <!-- Select Artisan from Posts -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-bh-bg border border-emerald-500/30">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">اختر الحرفي المقترح (بناء / مقاول) من عروض الخدمة :</label>
-                    <select id="estSelectedMasonPost" class="w-full bg-bh-card border border-bh-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-emerald-400">
-                      <option value="auto">تلقائي: ترشيح أفضل حرفيي البناء المتوفرين بالمنصة</option>
-                    </select>
+                <!-- Select Artisan from Posts with Custom Area & Rate Live Calculator -->
+                <div class="p-4 rounded-2xl bg-bh-bg/90 border border-emerald-500/40 space-y-3">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <label class="block text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <i class="fa-solid fa-person-digging text-emerald-400"></i>
+                      <span>حساب تكلفة العامل والحرفي المختار من المنشورات (سعر المتر × المساحة) :</span>
+                    </label>
+                    <span class="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">حساب ديناميكي فوري</span>
                   </div>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">اختر حرفي الترصيص والكهرباء من عروض الخدمة :</label>
-                    <select id="estSelectedPlumberPost" class="w-full bg-bh-card border border-bh-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-emerald-400">
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- 1. Select Artisan from Posts -->
+                    <div class="sm:col-span-1">
+                      <label class="block text-[11px] font-semibold text-slate-300 mb-1">اختر الحرفي من منشورات عروض الخدمة :</label>
+                      <select id="estSelectedMasonPost" onchange="handleSelectMasonPostForEstimator(this.value)" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-400">
+                        <option value="auto">تلقائي: ترشيح أفضل حرفيي البناء المتوفرين بالمنصة</option>
+                      </select>
+                    </div>
+
+                    <!-- 2. Project Area for Worker -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-300 mb-1">المساحة المطلوبة لإنجازها (م²) :</label>
+                      <input type="number" id="estWorkerCustomArea" min="1" max="5000" value="50" oninput="updateWorkerLiveCalculation()" placeholder="مثلاً: 50" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                    </div>
+
+                    <!-- 3. Rate per m2 (e.g. 200 DZD) -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-300 mb-1">سعر المتر المربع للحرفي (دج / م²) :</label>
+                      <input type="number" id="estWorkerUnitRate" min="10" max="50000" step="10" value="200" oninput="updateWorkerLiveCalculation()" placeholder="مثلاً: 200" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400">
+                    </div>
+                  </div>
+
+                  <!-- Live Worker Calculation Display Card -->
+                  <div id="estWorkerLiveCard" class="p-3 rounded-2xl bg-bh-card border border-emerald-500/30 flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-trowel-bricks"></i>
+                      </div>
+                      <div class="text-xs space-y-0.5">
+                        <div class="flex items-center gap-2">
+                          <span id="estWorkerNameDisplay" class="font-bold text-white">حرفي بناء معتمد</span>
+                          <span id="estWorkerWilayaDisplay" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">الجزائر</span>
+                        </div>
+                        <div id="estWorkerCalcResult" class="text-xs font-mono font-bold text-emerald-400">
+                          حساب التكلفة: 50 م² × 200 دج = <span class="text-sm font-black text-white">10,000 دج</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button type="button" onclick="setQuickWorkerRate(200)" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-mono transition">200 دج/م²</button>
+                      <button type="button" onclick="setQuickWorkerRate(350)" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-mono transition">350 دج/م²</button>
+                      <button type="button" onclick="setQuickWorkerRate(500)" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-mono transition">500 دج/م²</button>
+                    </div>
+                  </div>
+
+                  <!-- Optional Plumber/Electrician Select -->
+                  <div class="pt-1">
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">اختر حرفي الترصيص والكهرباء من عروض الخدمة (اختياري) :</label>
+                    <select id="estSelectedPlumberPost" class="w-full bg-bh-card border border-bh-border rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-400">
                       <option value="auto">تلقائي: ترشيح حرفيي الترصيص والكهرباء المعتمدين</option>
                     </select>
                   </div>
@@ -1106,7 +1057,7 @@
               <div class="pt-2">
                 <button type="submit" id="btnRunEstimation" class="w-full py-3.5 bg-gradient-to-r from-bh-yellow via-amber-500 to-bh-orange text-slate-950 font-black rounded-2xl text-sm shadow-xl hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98">
                   <i class="fa-solid fa-calculator"></i>
-                  <span>حساب التكلفة التقديرية بالذكاء الاصطناعي</span>
+                  <span>حساب التكلفة التقديرية والكشف التقديري (Devis Estimatif)</span>
                 </button>
               </div>
 
@@ -1414,141 +1365,6 @@
 
       </div>
 
-      <!-- ========================================================================= -->
-      <!-- GLOBAL FOOTER DOWNLOAD SECTION: WINDOWS PC • ANDROID • IOS IPHONE         -->
-      <!-- ========================================================================= -->
-      <section id="sectionDownloadApp" class="mt-14 rounded-3xl bg-gradient-to-br from-[#0e1420] via-[#090d14] to-[#06080d] border border-amber-500/30 p-6 sm:p-10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] relative overflow-hidden text-right" dir="rtl">
-        <!-- Subtle Glow Background -->
-        <div class="absolute -top-24 -left-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-bh-border/70 pb-5">
-            <div class="flex items-center gap-3.5">
-              <img src="assets/batihub_logo.png" alt="BatiHub DZ" class="w-12 h-12 object-contain drop-shadow-md">
-              <div>
-                <h3 class="font-extrabold text-white text-lg sm:text-xl flex items-center gap-2">
-                  <span>تحميل وتثبيت تطبيق BatiHub DZ على كافة الأجهزة</span>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">PWA & Desktop</span>
-                </h3>
-                <p class="text-xs text-slate-400 mt-1">
-                  تطبيق جزائري متكامل، سريع، يعمل بدون الحاجة إلى متجر تطبيقات وبأيقونة رسمية على شاشتك الرئيسية!
-                </p>
-              </div>
-            </div>
-            
-            <button type="button" onclick="openDownloadAppModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg self-start sm:self-auto shrink-0">
-              <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
-              <span>نافذة التحميل السريع</span>
-            </button>
-          </div>
-
-          <!-- Cards Grid for the 3 Platforms -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            <!-- 1. Windows PC -->
-            <div class="p-5 rounded-2xl bg-bh-bg/80 border border-bh-border hover:border-blue-500/50 transition duration-300 flex flex-col justify-between space-y-4 group">
-              <div class="space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <div class="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center text-2xl group-hover:scale-110 transition">
-                    <i class="fa-brands fa-windows"></i>
-                  </div>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">ويندوز PC</span>
-                </div>
-                <h4 class="font-bold text-white text-sm">تطبيق الحاسوب (Windows PC)</h4>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                  تطبيق مستقل لسطح المكتب فائق السرعة، حفظ محلي وتلقائي، ويعمل مباشرة بدون متصفح.
-                </p>
-              </div>
-              <div class="space-y-2">
-                <button type="button" onclick="triggerWindowsDesktopDownload()" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
-                  <i class="fa-solid fa-download"></i>
-                  <span>تشغيل لحاسوب ويندوز</span>
-                </button>
-                <button type="button" onclick="copyPlatformLiveUrl()" class="w-full py-1.5 bg-bh-card hover:bg-slate-800 text-slate-300 font-semibold rounded-lg text-[11px] border border-bh-border transition flex items-center justify-center gap-1 cursor-pointer">
-                  <i class="fa-solid fa-link text-[10px]"></i>
-                  <span>نسخ الرابط المباشر للويب</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2. Android Phone -->
-            <div class="p-5 rounded-2xl bg-bh-bg/80 border border-bh-border hover:border-emerald-500/50 transition duration-300 flex flex-col justify-between space-y-4 group">
-              <div class="space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition">
-                    <i class="fa-brands fa-android"></i>
-                  </div>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">أندرويد</span>
-                </div>
-                <h4 class="font-bold text-white text-sm">هواتف أندرويد (Android)</h4>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                  تثبيت بنقرة واحدة كتطبيق أصلي (PWA)، تظهر أيقونة BatiHub DZ على الشاشة الرئيسية وتعمل بملء الشاشة مع حفظ تسجيل الدخول الدائم.
-                </p>
-              </div>
-              <div class="space-y-2">
-                <button type="button" onclick="triggerAndroidPwaInstall()" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
-                  <i class="fa-solid fa-mobile-screen-button"></i>
-                  <span>تثبيت تطبيق أندرويد الآن</span>
-                </button>
-                <div class="text-[10px] text-slate-400 text-center">أو عبر Chrome: انقر (⋮) ثم "تثبيت التطبيق"</div>
-              </div>
-            </div>
-
-            <!-- 3. iOS / iPhone -->
-            <div class="p-5 rounded-2xl bg-bh-bg/80 border border-bh-border hover:border-slate-400 transition duration-300 flex flex-col justify-between space-y-4 group">
-              <div class="space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <div class="w-12 h-12 rounded-2xl bg-slate-700/30 text-slate-200 flex items-center justify-center text-2xl group-hover:scale-110 transition">
-                    <i class="fa-brands fa-apple"></i>
-                  </div>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-700/40 text-slate-300">آيفون وآيباد</span>
-                </div>
-                <h4 class="font-bold text-white text-sm">آبل (iOS / iPhone / iPad)</h4>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                  في متصفح Safari، اضغط على زر المشاركة (Share) ثم اختر "إضافة إلى الشاشة الرئيسية" لتظهر أيقونة التطبيق الرسمية فوراً.
-                </p>
-              </div>
-              <div class="space-y-2">
-                <button type="button" onclick="showIosInstallInstructions()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition border border-bh-border flex items-center justify-center gap-2 cursor-pointer">
-                  <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                  <span>طريقة التثبيت على آيفون</span>
-                </button>
-                <div class="text-[10px] text-slate-400 text-center">يعمل بنقاء كامل وبدون شريط المتصفح</div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Live Web Links / Render Domain -->
-          <div class="p-4 rounded-2xl bg-bh-bg/95 border border-bh-border space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span class="text-xs font-semibold text-slate-200">الروابط المباشرة للمنصة (على سيرفرات الويب العالمية) :</span>
-              <span class="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-circle-check"></i>
-                متصل وجاهز للعمل
-              </span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div class="flex items-center gap-2 bg-bh-card border border-bh-border rounded-xl p-2 px-3">
-                <span class="text-[11px] font-bold text-amber-400 shrink-0">رابط Render:</span>
-                <input type="text" id="renderPlatformUrlInput" readonly value="https://batihub-dz.onrender.com" class="flex-1 bg-transparent text-xs text-slate-200 font-mono text-left focus:outline-none" dir="ltr">
-                <button type="button" onclick="copyRenderUrl()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold transition cursor-pointer">
-                  <i class="fa-solid fa-copy"></i>
-                </button>
-              </div>
-              <div class="flex items-center gap-2 bg-bh-card border border-bh-border rounded-xl p-2 px-3">
-                <span class="text-[11px] font-bold text-cyan-400 shrink-0">رابط GitHub Pages:</span>
-                <input type="text" id="ghPlatformUrlInput" readonly value="https://batihubdz.github.io/batihubdz/" class="flex-1 bg-transparent text-xs text-slate-200 font-mono text-left focus:outline-none" dir="ltr">
-                <button type="button" onclick="copyPlatformLiveUrl()" class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-semibold transition cursor-pointer">
-                  <i class="fa-solid fa-copy"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
     </main>
 
     <!-- MOBILE BOTTOM NAVIGATION -->
@@ -1558,9 +1374,14 @@
         <span class="text-[8px] font-bold mt-0.5 tracking-tight" data-i18n="m_nav_calc">الحاسبة</span>
       </button>
 
+      <button type="button" onclick="switchTab('tab-cost-estimator')" id="mNavEstimator" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-white transition active:scale-90 shrink-0">
+        <i class="fa-solid fa-file-invoice-dollar text-sm text-amber-400"></i>
+        <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_estimator">حساب التكاليف</span>
+      </button>
+
       <button type="button" onclick="switchTab('tab-worker-board')" id="mNavWorkers" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90">
         <i class="fa-solid fa-briefcase text-sm"></i>
-        <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_workers">عرض الخدمة</span>
+        <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_workers">عروض العمل</span>
       </button>
 
       <button type="button" onclick="switchTab('tab-worker-requests')" id="mNavWorkerRequests" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90">
@@ -1578,36 +1399,20 @@
         <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_materials">مواد البناء</span>
       </button>
 
-      <button type="button" onclick="switchTab('tab-ai-chat')" id="mNavAi" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-white transition active:scale-90 shrink-0">
-        <i class="fa-solid fa-wand-magic-sparkles text-sm text-cyan-400"></i>
-        <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_ai">ذكاء AI</span>
-      </button>
-
-      <button type="button" onclick="switchTab('tab-cost-estimator')" id="mNavEstimator" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-white transition active:scale-90 shrink-0">
-        <i class="fa-solid fa-file-invoice-dollar text-sm text-amber-400"></i>
-        <span class="text-[8px] font-semibold mt-0.5 tracking-tight">كشف Devis</span>
-      </button>
-
-      <button type="button" onclick="switchTab('tab-pending-posts')" id="mNavPending" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90 relative">
-        <i id="mNavPendingIcon" class="fa-solid fa-hourglass-half text-sm text-amber-400"></i>
-        <span id="mNavPendingBadge" class="hidden absolute top-0.5 right-1 px-1 rounded-full text-[7px] bg-amber-500 text-slate-950 font-black">0</span>
-        <span id="mNavPendingText" class="text-[8px] font-semibold mt-0.5 tracking-tight">معلقة</span>
-      </button>
-
       <button type="button" onclick="switchTab('tab-real-estate')" id="mNavRealEstate" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-white transition active:scale-90 shrink-0">
         <i class="fa-solid fa-house-chimney text-sm text-emerald-400"></i>
         <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_real_estate">عقارات</span>
       </button>
 
+      <button type="button" onclick="switchTab('tab-pending-posts')" id="mNavPending" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90 relative">
+        <i id="mNavPendingIcon" class="fa-solid fa-hourglass-half text-sm text-amber-400"></i>
+        <span id="mNavPendingBadge" class="hidden absolute top-0.5 right-1 px-1 rounded-full text-[7px] bg-amber-500 text-slate-950 font-black">0</span>
+        <span id="mNavPendingText" class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_pending">معلقة</span>
+      </button>
+
       <button type="button" onclick="switchTab('tab-study-offices')" id="mNavOffices" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90 shrink-0">
         <i class="fa-solid fa-compass-drafting text-sm text-sky-400"></i>
         <span class="text-[8px] font-semibold mt-0.5 tracking-tight" data-i18n="m_nav_offices">مكاتب</span>
-      </button>
-
-      <!-- Dedicated Download Tab on Mobile -->
-      <button type="button" onclick="openDownloadAppModal()" id="mNavDownload" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-emerald-400 hover:text-white transition active:scale-90 shrink-0">
-        <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
-        <span class="text-[8px] font-bold mt-0.5 tracking-tight">تحميل</span>
       </button>
 
       <button type="button" onclick="openMessagesHubModal()" id="mNavMessages" class="mobile-nav-item flex flex-col items-center justify-center py-1 px-1 rounded-xl text-slate-400 hover:text-white transition active:scale-90 relative">
@@ -2524,93 +2329,77 @@
   </div>
 
   
+
+
   <!-- ========================================================================= -->
-  <!-- MODAL: DOWNLOAD BATI HUB DZ FOR ALL PLATFORMS                             -->
+  <!-- MODAL: GOOGLE ACCOUNT CHOOSER (نافذة اختيار حساب Google الرسمية)          -->
   <!-- ========================================================================= -->
-  <div id="modalDownloadApp" class="modal-backdrop hidden">
-    <div class="modal-box max-w-xl w-full p-6 sm:p-8 space-y-6 text-right relative" dir="rtl">
-      <div class="flex items-center justify-between pb-3 border-b border-bh-border">
+  <div id="modalGoogleAccountChooser" class="modal-backdrop hidden">
+    <div class="modal-box max-w-md w-full p-6 sm:p-7 space-y-5 text-right relative bg-[#1c222d] border border-slate-700/80 rounded-3xl shadow-2xl" dir="rtl">
+      
+      <!-- Google Top Branding -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <div class="flex items-center gap-3">
-          <img src="assets/batihub_logo.png" alt="Logo" class="w-10 h-10 object-contain drop-shadow">
+          <!-- Official Google 4-color SVG Logo -->
+          <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md shrink-0">
+            <svg class="w-6 h-6" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+          </div>
           <div>
-            <h3 class="font-bold text-white text-base">تحميل وتثبيت تطبيق BatiHub DZ</h3>
-            <p class="text-[11px] text-slate-400">متاح على جميع الهواتف الذكية والحواسيب والمتصفحات بدون متجر</p>
+            <h3 class="font-bold text-white text-base">تسجيل الدخول باستخدام Google</h3>
+            <p class="text-xs text-slate-400">اختيار حساب للمتابعة إلى منصة BatiHub DZ</p>
           </div>
         </div>
-        <button type="button" onclick="closeDownloadAppModal()" class="w-7 h-7 rounded-full bg-bh-bg hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+        <button type="button" onclick="closeGoogleAccountChooserModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
           <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <!-- 1. Windows PC -->
-        <div class="p-4 rounded-2xl bg-bh-bg border border-bh-border hover:border-blue-500/60 transition flex flex-col justify-between space-y-3">
-          <div class="space-y-1.5">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
-              <i class="fa-brands fa-windows"></i>
-            </div>
-            <h4 class="font-bold text-white text-xs">الحاسوب (Windows PC)</h4>
-            <p class="text-[11px] text-slate-400">نسخة سطح المكتب الأصلية، سريعة وتعمل بدون متصفح مع حفظ تلقائي.</p>
-          </div>
-          <button type="button" onclick="triggerWindowsDesktopDownload()" class="w-full py-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-download text-xs"></i>
-            <span>تشغيل للحاسوب</span>
-          </button>
-        </div>
-
-        <!-- 2. Android -->
-        <div class="p-4 rounded-2xl bg-bh-bg border border-bh-border hover:border-emerald-400 transition flex flex-col justify-between space-y-3">
-          <div class="space-y-1.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
-              <i class="fa-brands fa-android"></i>
-            </div>
-            <h4 class="font-bold text-white text-xs">هواتف أندرويد (Android)</h4>
-            <p class="text-[11px] text-slate-400">تثبيت فوري كتطبيق أندرويد PWA مع أيقونة رسمية على شاشتك الرئيسية.</p>
-          </div>
-          <button type="button" onclick="triggerAndroidPwaInstall()" class="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-mobile-screen text-xs"></i>
-            <span>تثبيت للأندرويد</span>
-          </button>
-        </div>
-
-        <!-- 3. iOS / iPhone -->
-        <div class="p-4 rounded-2xl bg-bh-bg border border-bh-border hover:border-slate-300 transition flex flex-col justify-between space-y-3">
-          <div class="space-y-1.5">
-            <div class="w-10 h-10 rounded-xl bg-slate-700/40 text-slate-200 flex items-center justify-center text-xl">
-              <i class="fa-brands fa-apple"></i>
-            </div>
-            <h4 class="font-bold text-white text-xs">آيفون وآيباد (iOS)</h4>
-            <p class="text-[11px] text-slate-400">عبر متصفح Safari: اضغط مشاركة ثم "إضافة إلى الشاشة الرئيسية".</p>
-          </div>
-          <button type="button" onclick="showIosInstallInstructions()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition border border-bh-border flex items-center justify-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
-            <span>طريقة الآيفون</span>
-          </button>
+      <!-- Accounts List Container -->
+      <div class="space-y-2">
+        <p class="text-xs font-semibold text-slate-300">اختر حساب Google الخاص بك للدخول المباشر :</p>
+        <div id="googleAccountsChooserList" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar">
+          <!-- Dynamically Injected Google Accounts -->
         </div>
       </div>
 
-      <!-- Live Web Link Boxes -->
-      <div class="p-3.5 rounded-2xl bg-bh-bg/90 border border-bh-border space-y-3">
-        <label class="block text-xs font-semibold text-slate-300">الروابط المباشرة للمنصة (تعمل على كافة الأجهزة والمتصفحات) :</label>
-        
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold text-amber-400 w-24 shrink-0">رابط Render:</span>
-          <input type="text" id="liveRenderUrlModal" readonly value="https://batihub-dz.onrender.com" class="flex-1 bg-bh-card border border-bh-border rounded-xl px-3 py-1.5 text-xs text-amber-300 font-mono text-left" dir="ltr">
-          <button type="button" onclick="copyRenderUrl()" class="px-3.5 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-white border border-bh-border text-xs font-bold transition flex items-center gap-1 cursor-pointer">
-            <i class="fa-solid fa-copy"></i>
-            <span>نسخ</span>
-          </button>
-        </div>
+      <!-- Option: Use another account -->
+      <div class="pt-2 border-t border-slate-800">
+        <button type="button" onclick="toggleUseAnotherGoogleAccount()" class="w-full p-3 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-right transition flex items-center justify-between cursor-pointer">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <div class="text-xs">
+              <span class="font-bold text-white block">استخدام حساب Google آخر</span>
+              <span class="text-[10px] text-slate-400">إدخال بريد Gmail جديد للدخول الفوري</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-left text-xs text-slate-400"></i>
+        </button>
 
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold text-cyan-400 w-24 shrink-0">رابط GitHub:</span>
-          <input type="text" id="livePlatformUrlInput" readonly value="https://batihubdz.github.io/batihubdz/" class="flex-1 bg-bh-card border border-bh-border rounded-xl px-3 py-1.5 text-xs text-cyan-300 font-mono text-left" dir="ltr">
-          <button type="button" onclick="copyPlatformLiveUrl()" class="px-3.5 py-1.5 rounded-xl bg-bh-card hover:bg-slate-800 text-white border border-bh-border text-xs font-bold transition flex items-center gap-1 cursor-pointer">
-            <i class="fa-solid fa-copy"></i>
-            <span>نسخ</span>
-          </button>
+        <!-- Hidden input form for another account -->
+        <div id="useAnotherAccountBox" class="hidden mt-3 p-3 rounded-2xl bg-slate-900/90 border border-slate-700 space-y-2">
+          <label class="block text-[11px] font-semibold text-slate-300">أدخل عنوان بريد Gmail الخاص بك :</label>
+          <div class="flex items-center gap-2">
+            <input type="email" id="customAnotherGmailInput" placeholder="example@gmail.com" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-bh-yellow text-left" dir="ltr">
+            <button type="button" onclick="submitCustomAnotherGmail()" class="px-4 py-2 bg-gradient-to-r from-bh-yellow to-bh-orange text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer">
+              متابعة
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Google Privacy & Security Note -->
+      <div class="pt-2 text-[10px] text-slate-400 text-center leading-relaxed">
+        للمتابعة، ستشارك Google اسمك وعنوان بريدك الإلكتروني مع تطبيق BatiHub DZ.<br>
+        <span class="text-emerald-400 font-semibold">دخول فوري مباشر بدون أي رمز تحقق</span>
+      </div>
+
     </div>
   </div>
 

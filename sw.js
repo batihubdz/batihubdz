@@ -1,10 +1,10 @@
-// BatiHub DZ - Progressive Web App Service Worker (v6.0.0 Live Realtime)
-const CACHE_NAME = 'batihub-dz-v6.0.0-auth-email-password';
+// BatiHub DZ - Progressive Web App Service Worker (v6.1.0 Live Realtime)
+const CACHE_NAME = 'batihub-dz-v6.1.0-account-db-sync-fixed';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=6.0.0',
-  './app.js?v=6.0.0',
+  './style.css?v=6.1.0',
+  './app.js?v=6.1.0',
   './manifest.json',
   './assets/mqtt.min.js?v=4.1.0',
   './assets/batihub_logo.png',

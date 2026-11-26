@@ -531,12 +531,10 @@ function initAccountsDatabase() {
     accounts = {};
   }
 
-  // Enforce Seed Accounts guarantees
+  // Enforce Seed Accounts only if email not already registered
   for (const [email, seedAcc] of Object.entries(SEED_ACCOUNTS)) {
-    const existing = accounts[email];
-    if (!existing || existing.passwordHash !== SEED_HASH) {
+    if (!accounts[email]) {
       accounts[email] = {
-        ...(existing || {}),
         ...seedAcc
       };
     }
@@ -848,23 +846,24 @@ function switchAuthTab(tab) {
   }
 }
 
-function toggleAuthPasswordVisibility(inputId) {
-  const input = document.getElementById(inputId);
-  const icon = document.getElementById('eye_' + inputId);
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (icon) {
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    }
-  } else {
-    input.type = 'password';
-    if (icon) {
-      icon.classList.remove('fa-eye-slash');
-      icon.classList.add('fa-eye');
-    }
+function toggleAuthPasswordVisibility(inputId, event) {
+  if (event) {
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
   }
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = (input.type === 'password');
+  input.type = isPassword ? 'text' : 'password';
+  const icon = document.getElementById('eye_' + inputId);
+  if (icon) {
+    icon.className = isPassword ? 'fa-solid fa-eye-slash text-amber-400 text-sm' : 'fa-solid fa-eye text-slate-400 text-sm';
+  }
+  try {
+    input.focus();
+    const len = input.value.length;
+    input.setSelectionRange(len, len);
+  } catch (e) {}
 }
 
 async function handleStandardEmailLogin() {
@@ -1192,7 +1191,9 @@ function forgetSavedLoginCredentials() {
   renderTrustedAccountsPills();
   showToast('تمت إزالة الأجهزة الموثوقة المحفوظة بنجاح', 'info');
 }
-function togglePasswordVisibility() {}
+function togglePasswordVisibility(inputId, event) {
+  return toggleAuthPasswordVisibility(inputId, event);
+}
 async function handleSendPasswordResetCode() {
   showToast('يتم تسجيل الدخول مباشرة برمز التحقق عبر Gmail', 'info');
 }
@@ -2167,14 +2168,16 @@ function handleIncomingLiveSyncPacket(packet) {
   }
 
   // 11. Real-time New Account Synchronization
-  else if (action === 'new_registered_account' && payload) {
+  else if (action === 'new_registered_account' && payload && payload.email) {
     let accounts = initAccountsDatabase();
-    if (!accounts[payload.email]) {
-      accounts[payload.email] = payload;
-      setStorageJSON('batihub_registered_accounts', accounts);
-      if (window.electronDB && typeof window.electronDB.saveAccounts === 'function') {
-        try { window.electronDB.saveAccounts(accounts); } catch (e) {}
-      }
+    const cleanEmail = payload.email.toLowerCase();
+    accounts[cleanEmail] = {
+      ...(accounts[cleanEmail] || {}),
+      ...payload
+    };
+    setStorageJSON('batihub_registered_accounts', accounts);
+    if (window.electronDB && typeof window.electronDB.saveAccounts === 'function') {
+      try { window.electronDB.saveAccounts(accounts); } catch (e) {}
     }
   }
 
@@ -2191,8 +2194,12 @@ function handleIncomingLiveSyncPacket(packet) {
       let currentAccs = initAccountsDatabase();
       let changed = false;
       for (const [em, acc] of Object.entries(payload.accounts)) {
-        if (!currentAccs[em]) {
-          currentAccs[em] = acc;
+        const cleanEm = em.toLowerCase();
+        if (!currentAccs[cleanEm] || (acc && acc.passwordHash && currentAccs[cleanEm].passwordHash !== acc.passwordHash)) {
+          currentAccs[cleanEm] = {
+            ...(currentAccs[cleanEm] || {}),
+            ...acc
+          };
           changed = true;
         }
       }
@@ -3514,8 +3521,8 @@ function handleEditWorkerPostSubmit(event) {
 /* 12.7. REALTIME LIVE APP UPDATER (INSTANT UPDATE ACROSS ALL PHONES & APPS) */
 /* ========================================================================= */
 
-const CURRENT_APP_BUILD = 1732648000000;
-const CURRENT_APP_VERSION = '6.0.0';
+const CURRENT_APP_BUILD = 1732655000000;
+const CURRENT_APP_VERSION = '6.1.0';
 
 let isUpdatingApp = false;
 
@@ -5069,7 +5076,7 @@ function startLiveClock() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 0. Cache-Busting & Mobile Force Refresh Engine (Bypasses stale browser cache)
-  const CURRENT_APP_VERSION = '6.0.0';
+  const CURRENT_APP_VERSION = '6.1.0';
   const storedVersion = localStorage.getItem('batihub_app_version');
   if (storedVersion !== CURRENT_APP_VERSION) {
     localStorage.setItem('batihub_app_version', CURRENT_APP_VERSION);

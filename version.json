@@ -1,7 +1,7 @@
 {
-  "version": "6.0.0",
-  "build": 1732650800000,
+  "version": "6.1.0",
+  "build": 1732655000000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Standard Email and Password login/register authentication, device local database persistence and realtime MQTT cross-device sync",
-  "timestamp": "2026-11-26T21:31:00Z"
+  "releaseNotes": "Show/hide password toggle fix, persistent account database preservation without seed overwrite, cross-device realtime sync, remember session on device",
+  "timestamp": "2026-11-26T21:55:00Z"
 }

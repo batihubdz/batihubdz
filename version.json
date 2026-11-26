@@ -1,7 +1,7 @@
 {
-  "version": "4.8.0",
-  "build": 1732647500000,
+  "version": "4.9.0",
+  "build": 1732648000000,
   "appName": "BatiHub DZ",
-  "releaseNotes": "Official Google Sign-In card with floating labels, dynamic password step & OAuth consent, zero mock accounts",
-  "timestamp": "2026-11-26T19:55:00Z"
+  "releaseNotes": "Official 1-tap Google account chooser with authentic PC Google accounts and direct login without password",
+  "timestamp": "2026-11-26T20:07:00Z"
 }

@@ -1,10 +1,10 @@
-// BatiHub DZ - Progressive Web App Service Worker (v4.8.0 Live Realtime)
-const CACHE_NAME = 'batihub-dz-v4.8.0-official-google-flow';
+// BatiHub DZ - Progressive Web App Service Worker (v4.9.0 Live Realtime)
+const CACHE_NAME = 'batihub-dz-v4.9.0-google-1tap-accounts';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=4.8.0',
-  './app.js?v=4.8.0',
+  './style.css?v=4.9.0',
+  './app.js?v=4.9.0',
   './manifest.json',
   './assets/mqtt.min.js?v=4.1.0',
   './assets/batihub_logo.png',
